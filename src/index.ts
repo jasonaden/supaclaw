@@ -1,5 +1,15 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
+import {
+  ContextBudget,
+  ContextWindow,
+  createContextBudget,
+  createAdaptiveBudget,
+  buildContextWindow,
+  formatContextWindow,
+  getContextStats,
+  getBudgetForModel
+} from './context-manager';
 
 export interface OpenClawMemoryConfig {
   supabaseUrl: string;
@@ -1344,6 +1354,197 @@ Format: {"entities": [{"type": "...", "name": "...", "description": "..."}]}`
 
     return { memories, recentMessages, summary };
   }
+
+  // ============ CONTEXT WINDOW MANAGEMENT ============
+
+  /**
+   * Build an optimized context window with token budgeting
+   * Implements smart context selection and lost-in-middle mitigation
+   */
+  async buildOptimizedContext(opts: {
+    query: string;
+    sessionId?: string;
+    userId?: string;
+    modelContextSize?: number;
+    model?: string; // Use predefined model budget
+    useLostInMiddleFix?: boolean;
+    recencyWeight?: number;
+    importanceWeight?: number;
+    customBudget?: ContextBudget;
+  }): Promise<{
+    window: ContextWindow;
+    formatted: string;
+    stats: ReturnType<typeof getContextStats>;
+  }> {
+    const {
+      query,
+      sessionId,
+      userId,
+      modelContextSize,
+      model,
+      useLostInMiddleFix = true,
+      recencyWeight,
+      importanceWeight,
+      customBudget
+    } = opts;
+
+    // Fetch relevant data
+    const [messages, memories, learnings, entities] = await Promise.all([
+      sessionId ? this.getMessages(sessionId) : Promise.resolve([]),
+      this.recall(query, { userId, limit: 50 }),
+      this.searchLearnings(query, { limit: 20 }),
+      this.searchEntities({ query, limit: 15 })
+    ]);
+
+    // Determine budget
+    let budget: ContextBudget;
+    if (customBudget) {
+      budget = customBudget;
+    } else if (model) {
+      budget = getBudgetForModel(model);
+    } else if (modelContextSize) {
+      budget = createContextBudget({ modelContextSize });
+    } else {
+      // Adaptive budget based on available content
+      budget = createAdaptiveBudget({
+        messageCount: messages.length,
+        memoryCount: memories.length,
+        learningCount: learnings.length,
+        entityCount: entities.length
+      });
+    }
+
+    // Build context window
+    const window = buildContextWindow({
+      messages,
+      memories,
+      learnings,
+      entities,
+      budget,
+      useLostInMiddleFix,
+      recencyWeight,
+      importanceWeight
+    });
+
+    // Format for prompt
+    const formatted = formatContextWindow(window, {
+      groupByType: true,
+      includeMetadata: false
+    });
+
+    // Get stats
+    const stats = getContextStats(window);
+
+    return { window, formatted, stats };
+  }
+
+  /**
+   * Get smart context with automatic budget management
+   * Simplified version of buildOptimizedContext for common use cases
+   */
+  async getSmartContext(query: string, opts: {
+    sessionId?: string;
+    userId?: string;
+    model?: string;
+  } = {}): Promise<string> {
+    const result = await this.buildOptimizedContext({
+      query,
+      sessionId: opts.sessionId,
+      userId: opts.userId,
+      model: opts.model || 'default'
+    });
+
+    return result.formatted;
+  }
+
+  /**
+   * Estimate token usage for a session
+   */
+  async estimateSessionTokenUsage(sessionId: string): Promise<{
+    messages: number;
+    memories: number;
+    total: number;
+    contextSize: string; // e.g., "32k", "128k"
+  }> {
+    const stats = await this.countSessionTokens(sessionId);
+    
+    // Get memories from this session
+    const { data, error } = await this.supabase
+      .from('memories')
+      .select()
+      .eq('source_session_id', sessionId);
+
+    const memoryTokens = (data || []).reduce((sum, mem) => {
+      return sum + (mem.content.length / 4); // Rough estimate
+    }, 0);
+
+    const total = stats.totalTokens + memoryTokens;
+
+    // Determine context size needed
+    let contextSize = '4k';
+    if (total > 4000) contextSize = '8k';
+    if (total > 8000) contextSize = '16k';
+    if (total > 16000) contextSize = '32k';
+    if (total > 32000) contextSize = '64k';
+    if (total > 64000) contextSize = '128k';
+    if (total > 128000) contextSize = '200k';
+
+    return {
+      messages: stats.totalTokens,
+      memories: Math.round(memoryTokens),
+      total: Math.round(total),
+      contextSize
+    };
+  }
+
+  /**
+   * Test context window with different budgets
+   * Useful for optimization and debugging
+   */
+  async testContextBudgets(query: string, opts: {
+    sessionId?: string;
+    userId?: string;
+    models?: string[];
+  } = {}): Promise<Array<{
+    model: string;
+    budget: ContextBudget;
+    stats: ReturnType<typeof getContextStats>;
+  }>> {
+    const models = opts.models || ['gpt-3.5-turbo', 'gpt-4-turbo', 'claude-3.5-sonnet'];
+    const results = [];
+
+    for (const model of models) {
+      const { window, stats } = await this.buildOptimizedContext({
+        query,
+        sessionId: opts.sessionId,
+        userId: opts.userId,
+        model
+      });
+
+      results.push({
+        model,
+        budget: window.budget,
+        stats
+      });
+    }
+
+    return results;
+  }
 }
+
+// Re-export context manager utilities
+export {
+  ContextBudget,
+  ContextWindow,
+  ContextItem,
+  createContextBudget,
+  createAdaptiveBudget,
+  buildContextWindow,
+  formatContextWindow,
+  getContextStats,
+  getBudgetForModel,
+  estimateTokens,
+  estimateTokensAccurate
+} from './context-manager';
 
 export default OpenClawMemory;

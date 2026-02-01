@@ -21,6 +21,7 @@ OpenClaw Memory uses **Supabase (Postgres)** to give your agent:
 - ✅ **Session tracking** - Every conversation logged with metadata
 - ✅ **Semantic search** - Find relevant memories via vector similarity (pgvector)
 - ✅ **Smart context** - Only load what's relevant, not everything
+- ✅ **Context window management** - Token budgeting, smart selection, lost-in-middle mitigation
 - ✅ **Multi-agent** - Share memories across agents
 - ✅ **Structured data** - SQL queries, relationships, types
 
@@ -191,6 +192,81 @@ const results = await memory.hybridRecall('AI agents', {
 - **Keyword** - Fast lookups, exact term matching
 - **Semantic** - Conceptual search, understanding context
 - **Hybrid** - Best overall results, balances both strategies
+
+## 🎯 Context Window Management
+
+Advanced token budgeting and smart context selection to optimize LLM performance.
+
+### Smart Context Generation
+
+```typescript
+// Simple: Get optimized context for a query
+const context = await memory.getSmartContext('What did we discuss about the project?', {
+  sessionId: 'current-session',
+  model: 'claude-3.5-sonnet'  // Auto-configures for 200k context
+});
+
+// Advanced: Full control over budget and selection
+const result = await memory.buildOptimizedContext({
+  query: 'Project updates',
+  sessionId: 'session-123',
+  model: 'claude-3.5-sonnet',
+  useLostInMiddleFix: true,    // Place important items at edges
+  importanceWeight: 0.8,        // 80% importance, 20% recency
+  recencyWeight: 0.2
+});
+
+console.log('Context:', result.formatted);
+console.log('Stats:', result.stats);
+```
+
+### Custom Budget Allocation
+
+```typescript
+import { createContextBudget } from 'openclaw-memory';
+
+const budget = createContextBudget({
+  modelContextSize: 200000,     // 200k tokens for Claude
+  recentMessagesPct: 0.5,       // 50% for messages
+  memoriesPct: 0.3,             // 30% for memories
+  learningsPct: 0.15,           // 15% for learnings
+  entitiesPct: 0.05             // 5% for entities
+});
+
+const result = await memory.buildOptimizedContext({
+  query: 'Tell me everything',
+  customBudget: budget
+});
+```
+
+### Adaptive Budgeting
+
+Automatically adjusts allocation based on available content:
+
+```typescript
+import { createAdaptiveBudget } from 'openclaw-memory';
+
+const budget = createAdaptiveBudget({
+  messageCount: 100,   // Lots of messages
+  memoryCount: 20,     // Few memories
+  learningCount: 10,
+  entityCount: 5
+});
+// Result: More budget allocated to messages
+```
+
+### Lost-in-Middle Mitigation
+
+Research shows LLMs pay less attention to content in the middle of long contexts. OpenClaw automatically places high-importance items at the beginning and end:
+
+```typescript
+const result = await memory.buildOptimizedContext({
+  query: 'Important details',
+  useLostInMiddleFix: true  // ✓ High-importance at edges
+});
+```
+
+See [CONTEXT_WINDOW_GUIDE.md](./CONTEXT_WINDOW_GUIDE.md) for detailed examples and best practices.
 
 ## CLI Usage
 

@@ -54,46 +54,58 @@
 41. ✅ Learning application tracking
 42. [ ] Learning similarity search
 
+## Phase 5: Context Window Management (10-min session) ✅ COMPLETE
+41. ✅ Token estimation utilities
+42. ✅ Context budget creation (fixed/adaptive/model-specific)
+43. ✅ Smart context item selection
+44. ✅ Importance + recency scoring
+45. ✅ Lost-in-middle mitigation
+46. ✅ Context window building
+47. ✅ Format & statistics
+48. ✅ Integration with OpenClawMemory
+49. ✅ Comprehensive tests
+50. ✅ Documentation & examples
+
 ## Phase 7: Migration Tools (10-min session)
-43. [ ] Parse MEMORY.md to memories
-44. [ ] Parse daily logs to sessions
-45. [ ] Parse TODO.md to tasks
-46. [ ] Parse LEARNINGS.md to learnings
-47. [ ] Markdown export (memories → MD)
-48. [ ] Backup/restore utilities
+51. [ ] Parse MEMORY.md to memories
+52. [ ] Parse daily logs to sessions
+53. [ ] Parse TODO.md to tasks
+54. [ ] Parse LEARNINGS.md to learnings
+55. [ ] Markdown export (memories → MD)
+56. [ ] Backup/restore utilities
 
 ## Phase 8: Clawdbot Integration (10-min session)
-49. [ ] Design skill structure
-50. [ ] Create openclaw-memory skill
-51. [ ] Hook into session lifecycle
-52. [ ] Replace memory_search with recall
-53. [ ] Replace memory_get with getContext
-54. [ ] Auto-log messages
-55. [ ] Test with live Clawdbot
+57. [ ] Design skill structure
+58. [ ] Create openclaw-memory skill
+59. [ ] Hook into session lifecycle
+60. [ ] Replace memory_search with recall
+61. [ ] Replace memory_get with getContext
+62. [ ] Auto-log messages
+63. [ ] Test with live Clawdbot
 
 ## Phase 9: Advanced Features (10-min session)
-56. [ ] Memory importance decay
-57. [ ] Memory consolidation (merge similar)
-58. [ ] Context window budgeting
-59. [ ] Multi-agent memory sharing
-60. [ ] Real-time subscriptions
-61. [ ] Memory access logging
+64. [ ] Memory importance decay
+65. [ ] Memory consolidation (merge similar)
+66. [ ] Multi-agent memory sharing
+67. [ ] Real-time subscriptions
+68. [ ] Memory access logging
+69. [ ] Learning similarity search
 
 ## Phase 10: Testing & Docs (10-min session)
-62. [ ] Integration tests with Supabase
-63. [ ] Mock Supabase for unit tests
-64. [ ] API documentation site
-65. [ ] Example projects
-66. [ ] Performance benchmarks
-67. [ ] Security audit
+70. [ ] Integration tests with Supabase
+71. [ ] Mock Supabase for unit tests
+72. [ ] API documentation site
+73. [ ] Example projects
+74. [ ] Performance benchmarks
+75. [ ] Security audit
 
 ## Phase 11: Polish & Publish (10-min session)
-68. [ ] Error handling improvements
-69. [ ] TypeScript strict mode
-70. [ ] Bundle size optimization
-71. [ ] Publish to npm
-72. [ ] Create GitHub release
-73. [ ] Write blog post / announcement
+76. [ ] Error handling improvements
+77. [ ] TypeScript strict mode
+78. [ ] Bundle size optimization
+79. [ ] Publish to npm
+80. [ ] Create GitHub release
+81. [ ] Write blog post / announcement
 
 ## Future Ideas (Post-v1.0)
 74. [ ] GraphQL API
