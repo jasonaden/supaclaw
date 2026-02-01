@@ -478,6 +478,67 @@ Search entities with filters.
 ### `memory.mergeEntities(primaryId, duplicateId)`
 Merge duplicate entities (deduplication).
 
+### `memory.decayMemoryImportance(opts?)`
+Apply importance decay to old memories (lifecycle management).
+
+**Options:**
+- `userId` - Filter by user
+- `decayRate` - Decay rate 0-1 (default: 0.1)
+- `minImportance` - Minimum importance threshold (default: 0.1)
+- `olderThanDays` - Only decay memories older than X days (default: 7)
+
+**Returns:** `{ updated: number, avgDecay: number }`
+
+### `memory.consolidateMemories(opts?)`
+Merge similar/duplicate memories to reduce clutter.
+
+**Options:**
+- `userId` - Filter by user
+- `similarityThreshold` - Similarity threshold 0-1 (default: 0.9)
+- `category` - Filter by category
+- `limit` - Max pairs to check (default: 100)
+
+**Returns:** `{ merged: number, kept: number }`
+
+### `memory.versionMemory(memoryId)`
+Create a version snapshot of a memory.
+
+**Returns:** `{ memory, versionId }`
+
+### `memory.getMemoryVersions(memoryId)`
+Get version history for a memory.
+
+**Returns:** Array of `{ version, timestamp, content, importance }`
+
+### `memory.tagMemory(memoryId, tags)`
+Add tags to a memory for organization.
+
+### `memory.untagMemory(memoryId, tags)`
+Remove tags from a memory.
+
+### `memory.searchMemoriesByTags(tags, opts?)`
+Search memories by tags.
+
+**Options:**
+- `matchAll` - If true, must match ALL tags; if false, match ANY (default: false)
+- `limit` - Maximum results (default: 50)
+
+### `memory.cleanupOldSessions(opts?)`
+Archive or delete old sessions (maintenance).
+
+**Options:**
+- `olderThanDays` - Archive sessions older than X days (default: 90)
+- `action` - 'archive' or 'delete' (default: 'archive')
+- `keepSummaries` - Keep sessions with summaries (default: true)
+- `userId` - Filter by user
+
+**Returns:** `{ archived?: number, deleted?: number }`
+
+### `memory.getCleanupStats()`
+Get cleanup statistics for monitoring.
+
+**Returns:** `{ totalSessions, archivedSessions, oldSessions, totalMessages, orphanedMessages }`
+
 ## Integration with OpenClaw/Clawdbot
 
 This package is designed to integrate with [Clawdbot](https://github.com/clawdbot/clawdbot):
@@ -490,25 +551,38 @@ const context = await memory.getContext(userMessage);
 
 ## Roadmap
 
-- [x] ✅ CLI for memory management
-- [x] ✅ Markdown import/export
-- [x] ✅ Semantic search (OpenAI embeddings)
-- [x] ✅ Hybrid search (vector + keyword)
-- [x] ✅ Vector similarity functions
-- [x] ✅ Automatic session summarization
-- [x] ✅ Entity extraction from conversations
-- [x] ✅ Session export/import (markdown)
-- [x] ✅ Memory extraction from sessions
-- [x] ✅ Task hierarchy (subtasks)
-- [x] ✅ Learning application tracking
-- [ ] Memory importance decay over time
+### ✅ Completed
+- [x] CLI for memory management
+- [x] Markdown import/export
+- [x] Semantic search (OpenAI embeddings)
+- [x] Hybrid search (vector + keyword)
+- [x] Vector similarity functions
+- [x] Automatic session summarization
+- [x] Entity extraction from conversations
+- [x] Session export/import (markdown)
+- [x] Memory extraction from sessions
+- [x] Task hierarchy (subtasks)
+- [x] Learning application tracking
+- [x] Context window budgeting & management
+- [x] **Memory importance decay over time**
+- [x] **Memory consolidation (merge similar)**
+- [x] **Memory versioning (historical snapshots)**
+- [x] **Memory tagging system**
+- [x] **Auto-cleanup old sessions**
+- [x] **Cleanup statistics & monitoring**
+
+### 🚧 In Progress
 - [ ] Voyage AI embedding provider
 - [ ] Local embeddings (transformers.js)
 - [ ] Clawdbot skill integration
+
+### 📋 Planned
 - [ ] Multi-agent memory sharing
 - [ ] Entity relationship tracking table
-- [ ] Memory consolidation (merge similar)
-- [ ] Context window budgeting
+- [ ] Memory migration tools (MEMORY.md → DB)
+- [ ] Real-time subscriptions
+- [ ] Memory access logging
+- [ ] Memory reactions/ratings
 
 ## Contributing
 

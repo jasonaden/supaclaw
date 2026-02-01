@@ -610,6 +610,224 @@ async function cmdImport(inputPath: string): Promise<void> {
   }
 }
 
+async function cmdDecay(options: { 
+  olderThanDays: number; 
+  decayRate: number; 
+  minImportance: number;
+}): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  try {
+    const { OpenClawMemory } = await import('./index');
+    const memory = new OpenClawMemory({
+      supabaseUrl: config.supabaseUrl,
+      supabaseKey: config.supabaseKey,
+      agentId: config.agentId
+    });
+
+    console.log(`🔄 Applying importance decay to memories older than ${options.olderThanDays} days...`);
+    const result = await memory.decayMemoryImportance(options);
+
+    console.log(`\n✅ Decay complete:`);
+    console.log(`   - Updated: ${result.updated} memories`);
+    console.log(`   - Average decay: ${(result.avgDecay * 100).toFixed(2)}%`);
+  } catch (err) {
+    console.error('❌ Decay error:', err);
+    process.exit(1);
+  }
+}
+
+async function cmdConsolidate(options: {
+  similarityThreshold: number;
+  category?: string;
+  limit: number;
+}): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  try {
+    const { OpenClawMemory } = await import('./index');
+    const memory = new OpenClawMemory({
+      supabaseUrl: config.supabaseUrl,
+      supabaseKey: config.supabaseKey,
+      agentId: config.agentId
+    });
+
+    console.log(`🔄 Consolidating similar memories (threshold: ${options.similarityThreshold})...`);
+    const result = await memory.consolidateMemories(options);
+
+    console.log(`\n✅ Consolidation complete:`);
+    console.log(`   - Merged: ${result.merged} memories`);
+    console.log(`   - Kept: ${result.kept} unique memories`);
+  } catch (err) {
+    console.error('❌ Consolidation error:', err);
+    process.exit(1);
+  }
+}
+
+async function cmdTag(memoryId: string, tags: string[]): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  try {
+    const { OpenClawMemory } = await import('./index');
+    const memory = new OpenClawMemory({
+      supabaseUrl: config.supabaseUrl,
+      supabaseKey: config.supabaseKey,
+      agentId: config.agentId
+    });
+
+    const result = await memory.tagMemory(memoryId, tags);
+    const allTags = result.metadata?.tags as string[] || [];
+
+    console.log(`✅ Tagged memory ${memoryId}`);
+    console.log(`   Tags: ${allTags.join(', ')}`);
+  } catch (err) {
+    console.error('❌ Tag error:', err);
+    process.exit(1);
+  }
+}
+
+async function cmdUntag(memoryId: string, tags: string[]): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  try {
+    const { OpenClawMemory } = await import('./index');
+    const memory = new OpenClawMemory({
+      supabaseUrl: config.supabaseUrl,
+      supabaseKey: config.supabaseKey,
+      agentId: config.agentId
+    });
+
+    const result = await memory.untagMemory(memoryId, tags);
+    const allTags = result.metadata?.tags as string[] || [];
+
+    console.log(`✅ Removed tags from memory ${memoryId}`);
+    console.log(`   Remaining tags: ${allTags.length > 0 ? allTags.join(', ') : 'none'}`);
+  } catch (err) {
+    console.error('❌ Untag error:', err);
+    process.exit(1);
+  }
+}
+
+async function cmdSearchTags(tags: string[], options: { 
+  matchAll: boolean; 
+  limit: number;
+}): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  try {
+    const { OpenClawMemory } = await import('./index');
+    const memory = new OpenClawMemory({
+      supabaseUrl: config.supabaseUrl,
+      supabaseKey: config.supabaseKey,
+      agentId: config.agentId
+    });
+
+    console.log(`🔍 Searching for memories with tags: ${tags.join(', ')} (${options.matchAll ? 'ALL' : 'ANY'})`);
+    const results = await memory.searchMemoriesByTags(tags, options);
+
+    if (results.length === 0) {
+      console.log('   No matching memories found.');
+      return;
+    }
+
+    console.log(`\nFound ${results.length} memories:\n`);
+    results.forEach((mem, i) => {
+      const memTags = mem.metadata?.tags as string[] || [];
+      console.log(`${i + 1}. [${mem.category || 'uncategorized'}] ${mem.content.slice(0, 80)}...`);
+      console.log(`   Tags: ${memTags.join(', ')}`);
+      console.log(`   Importance: ${mem.importance}`);
+      console.log();
+    });
+  } catch (err) {
+    console.error('❌ Search error:', err);
+    process.exit(1);
+  }
+}
+
+async function cmdCleanup(options: {
+  olderThanDays: number;
+  action: 'archive' | 'delete';
+  keepSummaries: boolean;
+}): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  try {
+    const { OpenClawMemory } = await import('./index');
+    const memory = new OpenClawMemory({
+      supabaseUrl: config.supabaseUrl,
+      supabaseKey: config.supabaseKey,
+      agentId: config.agentId
+    });
+
+    const actionWord = options.action === 'delete' ? 'Deleting' : 'Archiving';
+    console.log(`🔄 ${actionWord} sessions older than ${options.olderThanDays} days...`);
+
+    const result = await memory.cleanupOldSessions(options);
+    const count = options.action === 'delete' ? result.deleted! : result.archived!;
+
+    console.log(`\n✅ Cleanup complete: ${actionWord.toLowerCase()} ${count} sessions`);
+  } catch (err) {
+    console.error('❌ Cleanup error:', err);
+    process.exit(1);
+  }
+}
+
+async function cmdCleanupStats(): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  try {
+    const { OpenClawMemory } = await import('./index');
+    const memory = new OpenClawMemory({
+      supabaseUrl: config.supabaseUrl,
+      supabaseKey: config.supabaseKey,
+      agentId: config.agentId
+    });
+
+    console.log('📊 Gathering cleanup statistics...\n');
+    const stats = await memory.getCleanupStats();
+
+    console.log('Sessions:');
+    console.log(`   Total: ${stats.totalSessions}`);
+    console.log(`   Archived: ${stats.archivedSessions}`);
+    console.log(`   Old (>90 days): ${stats.oldSessions}`);
+    console.log();
+    console.log('Messages:');
+    console.log(`   Total: ${stats.totalMessages}`);
+    console.log(`   Orphaned: ${stats.orphanedMessages}`);
+  } catch (err) {
+    console.error('❌ Stats error:', err);
+    process.exit(1);
+  }
+}
+
 // ============ MAIN ============
 
 const program = new Command();
@@ -677,5 +895,74 @@ program
   .command('import <path>')
   .description('Import memories from markdown file')
   .action(cmdImport);
+
+program
+  .command('decay')
+  .description('Apply importance decay to old memories')
+  .option('-d, --days <number>', 'Only decay memories older than X days', '7')
+  .option('-r, --rate <number>', 'Decay rate (0-1)', '0.1')
+  .option('--min <number>', 'Minimum importance threshold', '0.1')
+  .action((options) => {
+    cmdDecay({
+      olderThanDays: parseInt(options.days),
+      decayRate: parseFloat(options.rate),
+      minImportance: parseFloat(options.min)
+    });
+  });
+
+program
+  .command('consolidate')
+  .description('Merge similar memories')
+  .option('-t, --threshold <number>', 'Similarity threshold (0-1)', '0.9')
+  .option('-c, --category <name>', 'Filter by category')
+  .option('-l, --limit <number>', 'Max memories to check', '100')
+  .action((options) => {
+    cmdConsolidate({
+      similarityThreshold: parseFloat(options.threshold),
+      category: options.category,
+      limit: parseInt(options.limit)
+    });
+  });
+
+program
+  .command('tag <memoryId> <tags...>')
+  .description('Add tags to a memory')
+  .action(cmdTag);
+
+program
+  .command('untag <memoryId> <tags...>')
+  .description('Remove tags from a memory')
+  .action(cmdUntag);
+
+program
+  .command('search-tags <tags...>')
+  .description('Search memories by tags')
+  .option('-a, --all', 'Match ALL tags (default: match ANY)')
+  .option('-l, --limit <number>', 'Maximum results', '50')
+  .action((tags, options) => {
+    cmdSearchTags(tags, {
+      matchAll: options.all,
+      limit: parseInt(options.limit)
+    });
+  });
+
+program
+  .command('cleanup')
+  .description('Archive or delete old sessions')
+  .option('-d, --days <number>', 'Archive sessions older than X days', '90')
+  .option('--delete', 'Delete instead of archive')
+  .option('--keep-summaries', 'Keep sessions with summaries', true)
+  .action((options) => {
+    cmdCleanup({
+      olderThanDays: parseInt(options.days),
+      action: options.delete ? 'delete' : 'archive',
+      keepSummaries: options.keepSummaries
+    });
+  });
+
+program
+  .command('cleanup-stats')
+  .description('Show cleanup statistics')
+  .action(cmdCleanupStats);
 
 program.parse(process.argv);

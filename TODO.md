@@ -83,13 +83,25 @@
 62. [ ] Auto-log messages
 63. [ ] Test with live Clawdbot
 
+## Phase 6: Memory Lifecycle (10-min session) ✅ COMPLETE
+51. ✅ Memory importance decay (auto-decay over time)
+52. ✅ Memory consolidation (merge similar memories)
+53. ✅ Memory versioning (historical snapshots)
+54. ✅ Memory tagging (organize with tags)
+55. ✅ Tag-based search (match ANY/ALL)
+56. ✅ Auto-cleanup old sessions (archive/delete)
+57. ✅ Cleanup statistics (monitoring)
+58. ✅ CLI commands (decay, consolidate, tag, cleanup)
+59. ✅ Comprehensive tests
+60. ✅ Documentation
+
 ## Phase 9: Advanced Features (10-min session)
-64. [ ] Memory importance decay
-65. [ ] Memory consolidation (merge similar)
-66. [ ] Multi-agent memory sharing
-67. [ ] Real-time subscriptions
-68. [ ] Memory access logging
-69. [ ] Learning similarity search
+64. [ ] Multi-agent memory sharing
+65. [ ] Real-time subscriptions
+66. [ ] Memory access logging
+67. [ ] Learning similarity search
+68. [ ] Memory reactions/ratings
+69. [ ] Memory chains (linked memories)
 
 ## Phase 10: Testing & Docs (10-min session)
 70. [ ] Integration tests with Supabase
