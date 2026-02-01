@@ -2957,4 +2957,13 @@ export {
   estimateTokensAccurate
 } from './context-manager';
 
+// Export Clawdbot integration
+export {
+  ClawdbotMemoryIntegration,
+  ClawdbotConfig,
+  MessageContext,
+  createClawdbotIntegration,
+  createLoggingMiddleware
+} from './clawdbot-integration';
+
 export default OpenClawMemory;

@@ -1,0 +1,29 @@
+{
+  "name": "openclaw-memory",
+  "version": "1.0.0-beta",
+  "description": "Semantic memory system for AI agents - replaces file-based memory with searchable database",
+  "category": "memory",
+  "tags": ["memory", "context", "embeddings", "semantic-search", "sessions", "tasks", "learnings"],
+  "author": "Arephan",
+  "license": "MIT",
+  "requirements": {
+    "npm": ["openclaw-memory"],
+    "env": ["SUPABASE_URL", "SUPABASE_KEY", "OPENAI_API_KEY"]
+  },
+  "capabilities": [
+    "Semantic memory search",
+    "Auto-logging all messages",
+    "Session management",
+    "Task tracking",
+    "Learning capture",
+    "Entity extraction",
+    "Context injection"
+  ],
+  "replaces": [
+    "memory_search",
+    "memory_get",
+    "MEMORY.md",
+    "TODO.md",
+    "LEARNINGS.md"
+  ]
+}

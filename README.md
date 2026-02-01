@@ -329,6 +329,164 @@ npx openclaw-memory import-learnings-md ~/clawd/LEARNINGS.md
 npx openclaw-memory import-all ~/clawd --user-id han
 ```
 
+## 🤖 Clawdbot Integration
+
+OpenClaw Memory provides seamless integration with [Clawdbot](https://github.com/clawdbot/clawdbot) to replace file-based memory systems.
+
+### Installation as Clawdbot Skill
+
+```bash
+# Install via clawdhub
+clawdhub install openclaw-memory
+
+# Or install globally via npm
+npm install -g openclaw-memory
+```
+
+### Quick Setup
+
+```typescript
+import { createClawdbotIntegration } from 'openclaw-memory';
+
+const integration = createClawdbotIntegration({
+  supabaseUrl: process.env.SUPABASE_URL!,
+  supabaseKey: process.env.SUPABASE_KEY!,
+  agentId: 'hans-assistant',
+  userId: 'han',
+  embeddingProvider: 'openai',
+  openaiApiKey: process.env.OPENAI_API_KEY,
+  autoLog: true,          // Auto-log all messages
+  sessionTimeout: 30 * 60 * 1000  // 30 min inactivity
+});
+
+await integration.initialize();
+```
+
+### Auto-Logging Messages
+
+```typescript
+// User message
+await integration.logUserMessage(chatId, 'What is TypeScript?', {
+  channel: 'telegram',
+  messageId: msg.id
+});
+
+// Assistant response
+await integration.logAssistantMessage(chatId, 'TypeScript is...', {
+  model: 'claude-sonnet-4-5'
+});
+```
+
+### Replacing memory_search Tool
+
+**Before (file-based):**
+```typescript
+function memory_search(query: string) {
+  const content = fs.readFileSync('MEMORY.md', 'utf-8');
+  return content.split('\n').filter(line => 
+    line.toLowerCase().includes(query.toLowerCase())
+  );
+}
+```
+
+**After (semantic search):**
+```typescript
+async function memory_search(query: string) {
+  return await integration.memorySearch(query, {
+    userId: 'han',
+    limit: 5,
+    minImportance: 0.5
+  });
+}
+```
+
+**Benefits:**
+- 🎯 Semantic understanding (finds "code style" when you search "programming preferences")
+- 📉 95% token reduction (5 memories vs entire file)
+- ⚡ Faster (database query vs file I/O)
+- 🎚️ Importance filtering (only relevant memories)
+
+### Auto-Injecting Context into System Prompts
+
+```typescript
+async function buildSystemPrompt(userQuery: string) {
+  // Get relevant memories, learnings, and recent messages
+  const context = await integration.buildContext(userQuery, {
+    includeMemories: true,
+    includeLearnings: true,
+    includeRecentMessages: true,
+    chatId: 'telegram-123',
+    maxMemories: 5,
+    maxLearnings: 3
+  });
+
+  return BASE_SYSTEM_PROMPT + '\n\n' + context;
+}
+```
+
+**Generated Context:**
+```
+## Relevant Context
+
+- [preferences] User prefers TypeScript over JavaScript
+- [projects] Working on stock trading challenge
+- [context] User is actively trading TSLA
+
+## Past Learnings
+
+- [correction] User prefers Rust for performance-critical code
+  Action: Suggest Rust for system-level tasks
+
+## Recent Conversation
+
+- user: What's the stock price of TSLA?
+- assistant: Tesla is currently trading at $245.
+```
+
+### Session Lifecycle Hooks
+
+```typescript
+// Session auto-created on first message
+const sessionId = await integration.getOrCreateSession('telegram-123');
+
+// End session with auto-summary
+await integration.endSession('telegram-123', {
+  autoSummarize: true,
+  extractMemories: true
+});
+
+// Heartbeat check (call every 30 min)
+const { upcomingTasks, inactiveSessions } = await integration.heartbeat();
+
+// Send task reminders
+for (const task of upcomingTasks) {
+  const reminder = integration.getMemory().formatTaskReminder(task, task.timeUntilDue);
+  await sendNotification(reminder);
+}
+```
+
+### Token & Cost Savings
+
+**Before (MEMORY.md):**
+- File size: 50 KB
+- Tokens per turn: ~12,500
+- Cost per 1M turns: ~$37.50
+
+**After (OpenClaw Memory):**
+- Memories retrieved: 5
+- Tokens per turn: ~500
+- Cost per 1M turns: ~$1.50
+- **💰 Savings: 96% reduction, $36/M turns**
+
+### Complete Integration Example
+
+See [`skill/example-integration.ts`](skill/example-integration.ts) for a full working example showing:
+- Message handler with auto-logging
+- Tool replacement (memory_search, memory_get)
+- Context injection
+- Session lifecycle
+- Heartbeat monitoring
+
 ### Migrating from Clawdbot Memory Files
 
 If you're using traditional Clawdbot memory files, OpenClaw Memory can import them:

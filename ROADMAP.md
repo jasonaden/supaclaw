@@ -133,14 +133,14 @@
 87. ✅ Export to markdown (full backup)
 88. [ ] Sync bidirectional (DB ↔ markdown)
 
-### Phase 10: Clawdbot Integration (Steps 89-95)
-89. [ ] Create openclaw-memory skill
-90. [ ] Auto-inject memory into system prompt
-91. [ ] Replace memory_search tool
-92. [ ] Replace memory_get tool
-93. [ ] Auto-log all messages
-94. [ ] Session start/end hooks
-95. [ ] Real-time memory updates
+### Phase 10: Clawdbot Integration ✅ (Steps 89-95) - DONE
+89. ✅ Create openclaw-memory skill
+90. ✅ Auto-inject memory into system prompt
+91. ✅ Replace memory_search tool
+92. ✅ Replace memory_get tool
+93. ✅ Auto-log all messages
+94. ✅ Session start/end hooks
+95. ✅ Real-time memory updates
 
 ### Phase 11: Polish & Publish (Steps 96-100)
 96. [ ] Error handling & retry logic
