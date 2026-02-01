@@ -20,38 +20,38 @@
 15. [ ] Write unit tests for messages
 16. [ ] Write unit tests for memories
 
-## Phase 3: Semantic Search (10-min session)
-17. [ ] Add OpenAI embedding generation
-18. [ ] Implement vector similarity search
-19. [ ] Add embedding caching
-20. [ ] Test recall() with embeddings
-21. [ ] Add Voyage AI as alternative provider
-22. [ ] Benchmark search performance
-23. [ ] Document embedding setup
+## Phase 3: Semantic Search (10-min session) ✅ COMPLETE
+17. ✅ Add OpenAI embedding generation
+18. ✅ Implement vector similarity search
+19. ✅ Add embedding caching
+20. ✅ Test recall() with embeddings
+21. ✅ Add Voyage AI as alternative provider
+22. ✅ Benchmark search performance
+23. ✅ Document embedding setup
 
-## Phase 4: Session Management (10-min session)
-24. [ ] Auto-summarization on session end
-25. [ ] Session continuation (resume from ID)
-26. [ ] Session search by date range
-27. [ ] Session export to markdown
-28. [ ] Session import from markdown
-29. [ ] Memory extraction from sessions
-30. [ ] Session token counting
+## Phase 4: Session Management (10-min session) ✅ COMPLETE
+24. ✅ Auto-summarization on session end
+25. ✅ Session continuation (resume from ID)
+26. ✅ Session search by date range
+27. ✅ Session export to markdown
+28. ✅ Session import from markdown
+29. ✅ Memory extraction from sessions
+30. ✅ Session token counting
 
-## Phase 5: Entity Extraction (10-min session)
-31. [ ] Design entity extraction prompt
-32. [ ] Implement extractEntities()
-33. [ ] Entity deduplication (merge aliases)
-34. [ ] Entity relationship tracking
-35. [ ] Entity search and lookup
-36. [ ] Test with real conversations
+## Phase 5: Entity Extraction (10-min session) ✅ COMPLETE
+31. ✅ Design entity extraction prompt
+32. ✅ Implement extractEntities()
+33. ✅ Entity deduplication (merge aliases)
+34. ✅ Entity relationship tracking
+35. ✅ Entity search and lookup
+36. ✅ Test with real conversations
 
-## Phase 6: Tasks & Learnings (10-min session)
-37. [ ] Complete task CRUD
-38. [ ] Task hierarchy (subtasks)
-39. [ ] Task reminders integration
-40. [ ] Learnings retrieval for context
-41. [ ] Learning application tracking
+## Phase 6: Tasks & Learnings (10-min session) ✅ COMPLETE
+37. ✅ Complete task CRUD
+38. ✅ Task hierarchy (subtasks)
+39. ✅ Task reminders integration
+40. ✅ Learnings retrieval for context
+41. ✅ Learning application tracking
 42. [ ] Learning similarity search
 
 ## Phase 7: Migration Tools (10-min session)

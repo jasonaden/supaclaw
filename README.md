@@ -84,8 +84,36 @@ const similar = await memory.findSimilarMemories(memoryId, {
   limit: 5
 });
 
-// End session with auto-summary
-await memory.endSession(session.id);
+// End session with AI-generated summary
+await memory.endSession(session.id, { autoSummarize: true });
+
+// Resume interrupted session
+const { session, messages, context } = await memory.resumeSession(sessionId);
+
+// Extract entities from conversation
+const entities = await memory.extractEntities('I love using Claude for coding');
+// Returns: [{ entity_type: 'product', name: 'Claude', description: '...' }]
+
+// Create tasks with hierarchy
+const project = await memory.createTask({ title: 'Build feature X' });
+await memory.createTask({ 
+  title: 'Design UI', 
+  parentTaskId: project.id 
+});
+
+// Get upcoming tasks (due in next 24h)
+const upcoming = await memory.getUpcomingTasks({ hoursAhead: 24 });
+
+// Record learnings for future context
+await memory.learn({
+  category: 'error',
+  trigger: 'Database migration failed',
+  lesson: 'Always backup before schema changes',
+  severity: 'critical'
+});
+
+// Search learnings when facing similar issues
+const relevantLearnings = await memory.searchLearnings('database');
 ```
 
 ## Database Schema
@@ -240,6 +268,43 @@ Log a message to a session.
 ### `memory.endSession(sessionId, opts?)`
 End a session, optionally with a summary.
 
+**Options:**
+- `summary` - Manual summary text
+- `autoSummarize` - Auto-generate summary using AI (requires OpenAI)
+
+### `memory.generateSessionSummary(sessionId)`
+Generate an AI summary of a session (2-3 sentences).
+
+### `memory.resumeSession(sessionId)`
+Resume an interrupted session with context.
+
+**Returns:** `{ session, messages, context }`
+
+### `memory.searchSessions(opts?)`
+Search sessions by date range and metadata.
+
+**Options:**
+- `userId`, `channel`, `startDate`, `endDate`
+- `limit`, `offset`
+
+### `memory.exportSessionToMarkdown(sessionId)`
+Export a session to markdown format.
+
+### `memory.importSessionFromMarkdown(markdown, opts?)`
+Import a session from markdown.
+
+### `memory.extractMemoriesFromSession(sessionId, opts?)`
+Extract key memories from a session using AI.
+
+**Options:**
+- `minImportance` - Minimum importance threshold (default: 0.5)
+- `autoExtract` - Use AI to extract (requires OpenAI)
+
+### `memory.countSessionTokens(sessionId)`
+Count total tokens used in a session.
+
+**Returns:** `{ totalTokens, messageCount, averageTokensPerMessage }`
+
 ### `memory.remember(memory)`
 Store a long-term memory. Automatically generates embeddings if provider configured.
 
@@ -274,6 +339,69 @@ Delete a memory.
 ### `memory.getContext(query, opts?)`
 Get relevant context for the current query (memories + recent messages).
 
+### `memory.createTask(task)`
+Create a task with optional hierarchy.
+
+**Options:** `title`, `description`, `priority`, `dueAt`, `parentTaskId`
+
+### `memory.updateTask(taskId, updates)`
+Update task properties.
+
+### `memory.deleteTask(taskId)`
+Delete a task.
+
+### `memory.getTasks(opts?)`
+Get tasks with filters.
+
+**Options:** `status`, `userId`, `limit`
+
+### `memory.getSubtasks(parentTaskId)`
+Get all subtasks of a parent task.
+
+### `memory.getTaskWithSubtasks(taskId)`
+Get a task with all its subtasks (hierarchical view).
+
+### `memory.getUpcomingTasks(opts?)`
+Get tasks due soon (default: next 24 hours).
+
+### `memory.learn(learning)`
+Record a learning for future reference.
+
+**Options:** `category`, `trigger`, `lesson`, `action`, `severity`
+
+### `memory.getLearnings(opts?)`
+Get recorded learnings.
+
+**Options:** `category`, `severity`, `limit`
+
+### `memory.searchLearnings(query, opts?)`
+Search learnings by topic.
+
+### `memory.applyLearning(learningId)`
+Mark a learning as applied (increments usage count).
+
+### `memory.extractEntities(text, opts?)`
+Extract named entities from text using AI.
+
+**Returns:** Array of entities (person, place, organization, product, concept)
+
+### `memory.createEntity(entity)`
+Manually create an entity.
+
+### `memory.updateEntity(entityId, updates)`
+Update an entity (increments mention count).
+
+### `memory.findEntity(nameOrAlias)`
+Find an entity by name or alias (case-insensitive).
+
+### `memory.searchEntities(opts?)`
+Search entities with filters.
+
+**Options:** `query`, `entityType`, `limit`
+
+### `memory.mergeEntities(primaryId, duplicateId)`
+Merge duplicate entities (deduplication).
+
 ## Integration with OpenClaw/Clawdbot
 
 This package is designed to integrate with [Clawdbot](https://github.com/clawdbot/clawdbot):
@@ -291,13 +419,20 @@ const context = await memory.getContext(userMessage);
 - [x] ✅ Semantic search (OpenAI embeddings)
 - [x] ✅ Hybrid search (vector + keyword)
 - [x] ✅ Vector similarity functions
-- [ ] Automatic session summarization (Claude API)
-- [ ] Entity extraction from conversations
+- [x] ✅ Automatic session summarization
+- [x] ✅ Entity extraction from conversations
+- [x] ✅ Session export/import (markdown)
+- [x] ✅ Memory extraction from sessions
+- [x] ✅ Task hierarchy (subtasks)
+- [x] ✅ Learning application tracking
 - [ ] Memory importance decay over time
 - [ ] Voyage AI embedding provider
 - [ ] Local embeddings (transformers.js)
 - [ ] Clawdbot skill integration
 - [ ] Multi-agent memory sharing
+- [ ] Entity relationship tracking table
+- [ ] Memory consolidation (merge similar)
+- [ ] Context window budgeting
 
 ## Contributing
 
