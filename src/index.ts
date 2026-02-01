@@ -2966,4 +2966,23 @@ export {
   createLoggingMiddleware
 } from './clawdbot-integration';
 
+// Export error handling utilities
+export {
+  OpenClawError,
+  DatabaseError,
+  EmbeddingError,
+  ValidationError,
+  RateLimitError,
+  RetryOptions,
+  CircuitBreaker,
+  retry,
+  wrapDatabaseOperation,
+  wrapEmbeddingOperation,
+  validateInput,
+  safeJsonParse,
+  withTimeout,
+  gracefulFallback,
+  batchWithErrorHandling
+} from './error-handling';
+
 export default OpenClawMemory;
