@@ -37,19 +37,19 @@
 7. ✅ Write README with API docs
 8. ✅ Push to GitHub
 
-### Phase 2: CLI & Testing (Steps 9-20)
-9. [ ] Create CLI entry point (src/cli.ts)
-10. [ ] Implement `openclaw-memory init` - guided setup
-11. [ ] Implement `openclaw-memory migrate` - run SQL
-12. [ ] Implement `openclaw-memory status` - show stats
-13. [ ] Implement `openclaw-memory search <query>` - search memories
-14. [ ] Implement `openclaw-memory sessions` - list sessions
-15. [ ] Implement `openclaw-memory export` - dump to markdown
-16. [ ] Implement `openclaw-memory import` - load from markdown
-17. [ ] Add connection test utility
-18. [ ] Write unit tests (sessions)
-19. [ ] Write unit tests (messages)
-20. [ ] Write unit tests (memories)
+### Phase 2: CLI & Testing ✅ (Steps 9-20) - DONE
+9. ✅ Create CLI entry point (src/cli.ts)
+10. ✅ Implement `openclaw-memory init` - guided setup
+11. ✅ Implement `openclaw-memory migrate` - run SQL
+12. ✅ Implement `openclaw-memory status` - show stats
+13. ✅ Implement `openclaw-memory search <query>` - search memories
+14. ✅ Implement `openclaw-memory sessions` - list sessions
+15. ✅ Implement `openclaw-memory export` - dump to markdown
+16. ✅ Implement `openclaw-memory import` - load from markdown
+17. ✅ Add connection test utility
+18. ✅ Write unit tests (sessions)
+19. ✅ Write unit tests (messages)
+20. ✅ Write unit tests (memories)
 
 ### Phase 3: Semantic Search (Steps 21-30)
 21. [ ] Add OpenAI embedding generation

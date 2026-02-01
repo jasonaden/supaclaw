@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { Command } from 'commander';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createInterface } from 'readline';
 
 const CONFIG_FILE = '.openclaw-memory.json';
@@ -46,6 +47,10 @@ async function prompt(question: string): Promise<string> {
       resolve(answer.trim());
     });
   });
+}
+
+function getSupabaseClient(config: Config): SupabaseClient {
+  return createClient(config.supabaseUrl, config.supabaseKey);
 }
 
 // ============ COMMANDS ============
@@ -92,7 +97,8 @@ async function cmdInit(): Promise<void> {
   console.log('\n✅ Configuration saved!');
   console.log('\nNext steps:');
   console.log('  1. Run migrations: npx openclaw-memory migrate');
-  console.log('  2. Check status:   npx openclaw-memory status');
+  console.log('  2. Test connection: npx openclaw-memory test');
+  console.log('  3. Check status:    npx openclaw-memory status');
 }
 
 async function cmdMigrate(): Promise<void> {
@@ -127,7 +133,71 @@ async function cmdMigrate(): Promise<void> {
   console.log('─'.repeat(60));
 
   console.log('\n✅ After running the migration, verify with:');
+  console.log('   npx openclaw-memory test');
   console.log('   npx openclaw-memory status');
+}
+
+async function cmdTest(): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  console.log('🔌 Testing Supabase Connection...\n');
+
+  const supabase = getSupabaseClient(config);
+
+  try {
+    // Test basic connectivity
+    const { error: sessionsError } = await supabase
+      .from('sessions')
+      .select('id')
+      .limit(1);
+
+    if (sessionsError) {
+      if (sessionsError.code === '42P01') {
+        console.error('❌ Tables not found. Run migrations first:');
+        console.error('   npx openclaw-memory migrate');
+      } else {
+        console.error('❌ Connection failed:', sessionsError.message);
+      }
+      process.exit(1);
+    }
+
+    console.log('✅ Connection successful!');
+    console.log(`   Agent ID: ${config.agentId}`);
+    console.log(`   Database: ${config.supabaseUrl}\n`);
+
+    // Test each table
+    const tables = ['sessions', 'messages', 'memories', 'entities', 'tasks', 'learnings'];
+    let allTablesExist = true;
+
+    for (const table of tables) {
+      const { error } = await supabase
+        .from(table)
+        .select('id')
+        .limit(1);
+
+      if (error) {
+        console.log(`❌ Table "${table}" not found`);
+        allTablesExist = false;
+      } else {
+        console.log(`✅ Table "${table}" accessible`);
+      }
+    }
+
+    if (!allTablesExist) {
+      console.log('\n⚠️  Some tables are missing. Run migrations:');
+      console.log('   npx openclaw-memory migrate');
+      process.exit(1);
+    }
+
+    console.log('\n🎉 All systems operational!');
+  } catch (err) {
+    console.error('❌ Unexpected error:', err);
+    process.exit(1);
+  }
 }
 
 async function cmdStatus(): Promise<void> {
@@ -139,10 +209,9 @@ async function cmdStatus(): Promise<void> {
 
   console.log('📊 OpenClaw Memory - Status\n');
 
-  const supabase = createClient(config.supabaseUrl, config.supabaseKey);
+  const supabase = getSupabaseClient(config);
 
   try {
-    // Check each table
     const tables = ['sessions', 'messages', 'memories', 'entities', 'tasks', 'learnings'];
     const stats: Record<string, number> = {};
 
@@ -154,7 +223,6 @@ async function cmdStatus(): Promise<void> {
 
       if (error) {
         if (error.code === '42P01') {
-          console.log(`⚠️  Table "${table}" not found. Run migrations first.`);
           stats[table] = -1;
         } else {
           console.error(`❌ Error checking ${table}:`, error.message);
@@ -173,7 +241,7 @@ async function cmdStatus(): Promise<void> {
       if (count === -1) {
         console.log(`  ${table.padEnd(12)} ⚠️  not found`);
       } else {
-        console.log(`  ${table.padEnd(12)} ${count} records`);
+        console.log(`  ${table.padEnd(12)} ${count.toString().padStart(6)} records`);
       }
     }
 
@@ -183,13 +251,17 @@ async function cmdStatus(): Promise<void> {
       .select('id, started_at, channel')
       .eq('agent_id', config.agentId)
       .is('ended_at', null)
+      .order('started_at', { ascending: false })
       .limit(5);
 
     if (activeSessions && activeSessions.length > 0) {
-      console.log(`\nActive Sessions: ${activeSessions.length}`);
+      console.log(`\n💬 Active Sessions: ${activeSessions.length}`);
       activeSessions.forEach(s => {
-        console.log(`  - ${s.id.slice(0, 8)}... (${s.channel || 'no channel'})`);
+        const date = new Date(s.started_at).toLocaleString();
+        console.log(`  - ${s.id.slice(0, 8)}... (${s.channel || 'unknown'}) started ${date}`);
       });
+    } else {
+      console.log('\n💬 No active sessions');
     }
 
   } catch (err) {
@@ -198,59 +270,332 @@ async function cmdStatus(): Promise<void> {
   }
 }
 
-function showHelp(): void {
-  console.log(`
-OpenClaw Memory CLI
+async function cmdSearch(query: string, options: { limit?: number }): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
 
-Usage:
-  openclaw-memory <command> [options]
+  if (!query || query.trim().length === 0) {
+    console.error('❌ Search query is required');
+    process.exit(1);
+  }
 
-Commands:
-  init      Initialize configuration (creates .openclaw-memory.json)
-  migrate   Run database migrations
-  status    Show database statistics
-  help      Show this help message
+  const limit = options.limit || 10;
+  console.log(`🔍 Searching memories for: "${query}"\n`);
 
-Examples:
-  openclaw-memory init
-  openclaw-memory migrate
-  openclaw-memory status
+  const supabase = getSupabaseClient(config);
 
-Documentation: https://github.com/Arephan/openclaw-memory
-`);
+  try {
+    // For now, use keyword search (semantic search requires embeddings)
+    const { data, error } = await supabase
+      .from('memories')
+      .select('*')
+      .eq('agent_id', config.agentId)
+      .or(`content.ilike.%${query}%,category.ilike.%${query}%`)
+      .order('importance', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('❌ Search failed:', error.message);
+      process.exit(1);
+    }
+
+    if (!data || data.length === 0) {
+      console.log('No memories found.');
+      return;
+    }
+
+    console.log(`Found ${data.length} memories:\n`);
+    data.forEach((mem, idx) => {
+      console.log(`${idx + 1}. [${mem.category}] (importance: ${mem.importance})`);
+      console.log(`   ${mem.content}`);
+      if (mem.metadata) {
+        console.log(`   Metadata: ${JSON.stringify(mem.metadata)}`);
+      }
+      console.log(`   Created: ${new Date(mem.created_at).toLocaleString()}\n`);
+    });
+
+  } catch (err) {
+    console.error('❌ Search error:', err);
+    process.exit(1);
+  }
+}
+
+async function cmdSessions(options: { limit?: number; active?: boolean }): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  console.log('📋 Sessions\n');
+
+  const supabase = getSupabaseClient(config);
+  const limit = options.limit || 20;
+
+  try {
+    let query = supabase
+      .from('sessions')
+      .select('*')
+      .eq('agent_id', config.agentId);
+
+    if (options.active) {
+      query = query.is('ended_at', null);
+    }
+
+    const { data, error } = await query
+      .order('started_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('❌ Failed to fetch sessions:', error.message);
+      process.exit(1);
+    }
+
+    if (!data || data.length === 0) {
+      console.log('No sessions found.');
+      return;
+    }
+
+    console.log(`Found ${data.length} sessions:\n`);
+    data.forEach((session, idx) => {
+      const started = new Date(session.started_at).toLocaleString();
+      const ended = session.ended_at ? new Date(session.ended_at).toLocaleString() : 'active';
+      const status = session.ended_at ? '✓' : '●';
+      
+      console.log(`${status} ${session.id.slice(0, 8)}...`);
+      console.log(`  User: ${session.user_id || 'unknown'}`);
+      console.log(`  Channel: ${session.channel || 'unknown'}`);
+      console.log(`  Started: ${started}`);
+      console.log(`  Ended: ${ended}`);
+      if (session.summary) {
+        console.log(`  Summary: ${session.summary.slice(0, 100)}${session.summary.length > 100 ? '...' : ''}`);
+      }
+      console.log('');
+    });
+
+  } catch (err) {
+    console.error('❌ Error:', err);
+    process.exit(1);
+  }
+}
+
+async function cmdExport(outputPath: string): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  console.log('📤 Exporting memories to markdown...\n');
+
+  const supabase = getSupabaseClient(config);
+
+  try {
+    // Fetch all memories
+    const { data, error } = await supabase
+      .from('memories')
+      .select('*')
+      .eq('agent_id', config.agentId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Export failed:', error.message);
+      process.exit(1);
+    }
+
+    if (!data || data.length === 0) {
+      console.log('No memories to export.');
+      return;
+    }
+
+    // Build markdown
+    let markdown = `# OpenClaw Memory Export\n\n`;
+    markdown += `**Agent:** ${config.agentId}\n`;
+    markdown += `**Exported:** ${new Date().toISOString()}\n`;
+    markdown += `**Total Memories:** ${data.length}\n\n`;
+    markdown += `---\n\n`;
+
+    // Group by category
+    const byCategory: Record<string, typeof data> = {};
+    data.forEach(mem => {
+      const cat = mem.category || 'uncategorized';
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push(mem);
+    });
+
+    for (const [category, memories] of Object.entries(byCategory)) {
+      markdown += `## ${category.charAt(0).toUpperCase() + category.slice(1)}\n\n`;
+      
+      memories.forEach(mem => {
+        markdown += `### ${new Date(mem.created_at).toISOString().split('T')[0]}\n\n`;
+        markdown += `**Importance:** ${mem.importance}\n\n`;
+        markdown += `${mem.content}\n\n`;
+        if (mem.metadata) {
+          markdown += `*Metadata:* ${JSON.stringify(mem.metadata)}\n\n`;
+        }
+        markdown += `---\n\n`;
+      });
+    }
+
+    // Write to file
+    const resolvedPath = outputPath || 'openclaw-memory-export.md';
+    writeFileSync(resolvedPath, markdown, 'utf-8');
+
+    console.log(`✅ Exported ${data.length} memories to: ${resolvedPath}`);
+
+  } catch (err) {
+    console.error('❌ Export error:', err);
+    process.exit(1);
+  }
+}
+
+async function cmdImport(inputPath: string): Promise<void> {
+  const config = loadConfig();
+  if (!config) {
+    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    process.exit(1);
+  }
+
+  console.log(`📥 Importing memories from: ${inputPath}\n`);
+
+  if (!existsSync(inputPath)) {
+    console.error('❌ File not found:', inputPath);
+    process.exit(1);
+  }
+
+  try {
+    const content = readFileSync(inputPath, 'utf-8');
+    
+    // Simple parser: extract lines that look like memories
+    // Format: "- Memory text" or "* Memory text"
+    const lines = content.split('\n');
+    const memories: Array<{ content: string; category: string; importance: number }> = [];
+
+    let currentCategory = 'imported';
+    
+    lines.forEach(line => {
+      line = line.trim();
+      
+      // Detect category headers
+      if (line.startsWith('## ')) {
+        currentCategory = line.slice(3).toLowerCase().trim();
+        return;
+      }
+
+      // Detect memory lines
+      if (line.startsWith('- ') || line.startsWith('* ')) {
+        const content = line.slice(2).trim();
+        if (content.length > 0) {
+          memories.push({
+            content,
+            category: currentCategory,
+            importance: 0.5 // default
+          });
+        }
+      }
+    });
+
+    if (memories.length === 0) {
+      console.log('⚠️  No memories found in file. Expected format:');
+      console.log('   ## Category Name');
+      console.log('   - Memory item one');
+      console.log('   - Memory item two');
+      return;
+    }
+
+    console.log(`Found ${memories.length} memories to import.\n`);
+
+    const supabase = getSupabaseClient(config);
+    let imported = 0;
+
+    for (const mem of memories) {
+      const { error } = await supabase
+        .from('memories')
+        .insert({
+          agent_id: config.agentId,
+          content: mem.content,
+          category: mem.category,
+          importance: mem.importance
+        });
+
+      if (error) {
+        console.error(`❌ Failed to import: ${mem.content.slice(0, 50)}...`);
+        console.error(`   Error: ${error.message}`);
+      } else {
+        imported++;
+      }
+    }
+
+    console.log(`\n✅ Successfully imported ${imported}/${memories.length} memories`);
+
+  } catch (err) {
+    console.error('❌ Import error:', err);
+    process.exit(1);
+  }
 }
 
 // ============ MAIN ============
 
-async function main() {
-  const args = process.argv.slice(2);
-  const command = args[0];
+const program = new Command();
 
-  switch (command) {
-    case 'init':
-      await cmdInit();
-      break;
-    case 'migrate':
-      await cmdMigrate();
-      break;
-    case 'status':
-      await cmdStatus();
-      break;
-    case 'help':
-    case '--help':
-    case '-h':
-      showHelp();
-      break;
-    default:
-      if (command) {
-        console.error(`❌ Unknown command: ${command}\n`);
-      }
-      showHelp();
-      process.exit(1);
-  }
-}
+program
+  .name('openclaw-memory')
+  .description('Persistent memory for AI agents using Supabase')
+  .version('0.1.0');
 
-main().catch((err) => {
-  console.error('Fatal error:', err);
-  process.exit(1);
-});
+program
+  .command('init')
+  .description('Initialize configuration (creates .openclaw-memory.json)')
+  .action(cmdInit);
+
+program
+  .command('migrate')
+  .description('Display database migration SQL')
+  .action(cmdMigrate);
+
+program
+  .command('test')
+  .description('Test Supabase connection and verify tables')
+  .action(cmdTest);
+
+program
+  .command('status')
+  .description('Show database statistics and active sessions')
+  .action(cmdStatus);
+
+program
+  .command('search <query>')
+  .description('Search memories by keyword')
+  .option('-l, --limit <number>', 'Maximum results', '10')
+  .action((query, options) => {
+    cmdSearch(query, { limit: parseInt(options.limit) });
+  });
+
+program
+  .command('sessions')
+  .description('List recent sessions')
+  .option('-l, --limit <number>', 'Maximum sessions', '20')
+  .option('-a, --active', 'Show only active sessions')
+  .action((options) => {
+    cmdSessions({ 
+      limit: parseInt(options.limit), 
+      active: options.active 
+    });
+  });
+
+program
+  .command('export [path]')
+  .description('Export memories to markdown file')
+  .action((path) => {
+    cmdExport(path || 'openclaw-memory-export.md');
+  });
+
+program
+  .command('import <path>')
+  .description('Import memories from markdown file')
+  .action(cmdImport);
+
+program.parse(process.argv);
