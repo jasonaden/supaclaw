@@ -10,12 +10,12 @@
 7. ✅ Implement OpenClawMemory class
 8. ✅ Push to GitHub
 
-## 🔄 Phase 2: Core Features (Next 10-min session)
-9. [ ] Add CLI entry point (src/cli.ts)
-10. [ ] Implement `migrate` command
-11. [ ] Implement `status` command  
-12. [ ] Add connection test utility
-13. [ ] Build and test locally
+## 🔄 Phase 2: Core Features (DONE ✅ Items 9-13)
+9. ✅ Add CLI entry point (src/cli.ts)
+10. ✅ Implement `migrate` command (prints SQL + instructions)
+11. ✅ Implement `status` command  
+12. ✅ Implement `init` command (guided setup)
+13. ✅ Build and test locally
 14. [ ] Write unit tests for sessions
 15. [ ] Write unit tests for messages
 16. [ ] Write unit tests for memories
