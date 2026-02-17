@@ -3,7 +3,7 @@
  * Implements token budgeting, smart context selection, and lost-in-middle mitigation
  */
 
-import { Message, Memory, Learning, Entity } from './index';
+import type { Message, Memory, Learning, Entity } from './types';
 
 export interface ContextBudget {
   total: number;
