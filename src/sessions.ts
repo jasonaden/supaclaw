@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
+import { wrapDatabaseOperation } from './error-handling';
 import type { SupaclawDeps, SupaclawConfig, Session, Message, Memory } from './types';
 
 export class SessionManager {
@@ -37,19 +38,21 @@ export class SessionManager {
     channel?: string;
     metadata?: Record<string, unknown>;
   } = {}): Promise<Session> {
-    const { data, error } = await this.supabase
-      .from('sessions')
-      .insert({
-        agent_id: this.agentId,
-        user_id: opts.userId,
-        channel: opts.channel,
-        metadata: opts.metadata || {}
-      })
-      .select()
-      .single();
+    return wrapDatabaseOperation(async () => {
+      const { data, error } = await this.supabase
+        .from('sessions')
+        .insert({
+          agent_id: this.agentId,
+          user_id: opts.userId,
+          channel: opts.channel,
+          metadata: opts.metadata || {}
+        })
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, 'startSession');
   }
 
   /**
@@ -66,18 +69,20 @@ export class SessionManager {
       summary = await this.generateSessionSummary(sessionId);
     }
 
-    const { data, error } = await this.supabase
-      .from('sessions')
-      .update({
-        ended_at: new Date().toISOString(),
-        summary
-      })
-      .eq('id', sessionId)
-      .select()
-      .single();
+    return wrapDatabaseOperation(async () => {
+      const { data, error } = await this.supabase
+        .from('sessions')
+        .update({
+          ended_at: new Date().toISOString(),
+          summary
+        })
+        .eq('id', sessionId)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, 'endSession');
   }
 
   /**
@@ -411,20 +416,22 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
     tokenCount?: number;
     metadata?: Record<string, unknown>;
   }): Promise<Message> {
-    const { data, error } = await this.supabase
-      .from('messages')
-      .insert({
-        session_id: sessionId,
-        role: message.role,
-        content: message.content,
-        token_count: message.tokenCount,
-        metadata: message.metadata || {}
-      })
-      .select()
-      .single();
+    return wrapDatabaseOperation(async () => {
+      const { data, error } = await this.supabase
+        .from('messages')
+        .insert({
+          session_id: sessionId,
+          role: message.role,
+          content: message.content,
+          token_count: message.tokenCount,
+          metadata: message.metadata || {}
+        })
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, 'addMessage');
   }
 
   /**
@@ -434,14 +441,16 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
     limit?: number;
     offset?: number;
   } = {}): Promise<Message[]> {
-    const { data, error } = await this.supabase
-      .from('messages')
-      .select()
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true })
-      .range(opts.offset || 0, (opts.offset || 0) + (opts.limit || 100) - 1);
+    return wrapDatabaseOperation(async () => {
+      const { data, error } = await this.supabase
+        .from('messages')
+        .select()
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true })
+        .range(opts.offset || 0, (opts.offset || 0) + (opts.limit || 100) - 1);
 
-    if (error) throw error;
-    return data || [];
+      if (error) throw error;
+      return data || [];
+    }, 'getMessages');
   }
 }

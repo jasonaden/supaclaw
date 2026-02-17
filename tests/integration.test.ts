@@ -2,10 +2,12 @@
  * Tests for Clawdbot Integration
  */
 
-import { describe, it, expect, beforeAll, beforeEach } from '@jest/globals';
+import { vi } from 'vitest';
 import { createClawdbotIntegration, ClawdbotMemoryIntegration } from '../src/clawdbot-integration';
 
-describe('Clawdbot Integration', () => {
+const hasSupabase = !!process.env['SUPABASE_URL'] && !!process.env['SUPABASE_KEY'];
+
+describe.skipIf(!hasSupabase)('Clawdbot Integration', () => {
   let integration: ClawdbotMemoryIntegration;
 
   beforeAll(() => {

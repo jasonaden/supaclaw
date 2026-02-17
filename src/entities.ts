@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { sanitizeFilterInput } from './utils';
+import { wrapDatabaseOperation, wrapEmbeddingOperation } from './error-handling';
 import type { SupaclawDeps, SupaclawConfig, Entity, EntityRelationship } from './types';
 
 export class EntityManager {
@@ -30,12 +31,14 @@ export class EntityManager {
       }
 
       const model = this.config.embeddingModel || 'text-embedding-3-small';
-      const response = await this.openai.embeddings.create({
-        model,
-        input: text,
-      });
+      return wrapEmbeddingOperation(async () => {
+        const response = await this.openai!.embeddings.create({
+          model,
+          input: text,
+        });
 
-      return response.data[0]!.embedding;
+        return response.data[0]!.embedding;
+      }, 'generateEmbedding (entities)');
     }
 
     // TODO: Add Voyage AI support
@@ -137,24 +140,26 @@ Format: {"entities": [{"type": "...", "name": "...", "description": "..."}]}`
     description?: string;
     properties?: Record<string, unknown>;
   }): Promise<Entity> {
-    const { data, error } = await this.supabase
-      .from('entities')
-      .insert({
-        agent_id: this.agentId,
-        entity_type: entity.entityType,
-        name: entity.name,
-        aliases: entity.aliases || [],
-        description: entity.description,
-        properties: entity.properties || {},
-        first_seen_at: new Date().toISOString(),
-        last_seen_at: new Date().toISOString(),
-        mention_count: 1
-      })
-      .select()
-      .single();
+    return wrapDatabaseOperation(async () => {
+      const { data, error } = await this.supabase
+        .from('entities')
+        .insert({
+          agent_id: this.agentId,
+          entity_type: entity.entityType,
+          name: entity.name,
+          aliases: entity.aliases || [],
+          description: entity.description,
+          properties: entity.properties || {},
+          first_seen_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+          mention_count: 1
+        })
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, 'createEntity');
   }
 
   /**
@@ -167,34 +172,36 @@ Format: {"entities": [{"type": "...", "name": "...", "description": "..."}]}`
     properties: Record<string, unknown>;
     lastSeenAt: string;
   }>): Promise<Entity> {
-    const updateData: Record<string, unknown> = {};
+    return wrapDatabaseOperation(async () => {
+      const updateData: Record<string, unknown> = {};
 
-    if (updates.name !== undefined) updateData['name'] = updates.name;
-    if (updates.aliases !== undefined) updateData['aliases'] = updates.aliases;
-    if (updates.description !== undefined) updateData['description'] = updates.description;
-    if (updates.properties !== undefined) updateData['properties'] = updates.properties;
-    if (updates.lastSeenAt !== undefined) updateData['last_seen_at'] = updates.lastSeenAt;
+      if (updates.name !== undefined) updateData['name'] = updates.name;
+      if (updates.aliases !== undefined) updateData['aliases'] = updates.aliases;
+      if (updates.description !== undefined) updateData['description'] = updates.description;
+      if (updates.properties !== undefined) updateData['properties'] = updates.properties;
+      if (updates.lastSeenAt !== undefined) updateData['last_seen_at'] = updates.lastSeenAt;
 
-    // Increment mention count
-    const entity = await this.supabase
-      .from('entities')
-      .select()
-      .eq('id', entityId)
-      .single();
+      // Increment mention count
+      const entity = await this.supabase
+        .from('entities')
+        .select()
+        .eq('id', entityId)
+        .single();
 
-    if (entity.error) throw entity.error;
+      if (entity.error) throw entity.error;
 
-    updateData['mention_count'] = (entity.data.mention_count || 0) + 1;
+      updateData['mention_count'] = (entity.data.mention_count || 0) + 1;
 
-    const { data, error } = await this.supabase
-      .from('entities')
-      .update(updateData)
-      .eq('id', entityId)
-      .select()
-      .single();
+      const { data, error } = await this.supabase
+        .from('entities')
+        .update(updateData)
+        .eq('id', entityId)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, 'updateEntity');
   }
 
   /**
@@ -221,25 +228,27 @@ Format: {"entities": [{"type": "...", "name": "...", "description": "..."}]}`
     entityType?: string;
     limit?: number;
   } = {}): Promise<Entity[]> {
-    let query = this.supabase
-      .from('entities')
-      .select()
-      .eq('agent_id', this.agentId)
-      .order('mention_count', { ascending: false })
-      .order('last_seen_at', { ascending: false })
-      .limit(opts.limit || 20);
+    return wrapDatabaseOperation(async () => {
+      let query = this.supabase
+        .from('entities')
+        .select()
+        .eq('agent_id', this.agentId)
+        .order('mention_count', { ascending: false })
+        .order('last_seen_at', { ascending: false })
+        .limit(opts.limit || 20);
 
-    if (opts.entityType) {
-      query = query.eq('entity_type', opts.entityType);
-    }
+      if (opts.entityType) {
+        query = query.eq('entity_type', opts.entityType);
+      }
 
-    if (opts.query) {
-      query = query.or(`name.ilike.%${sanitizeFilterInput(opts.query)}%,description.ilike.%${sanitizeFilterInput(opts.query)}%`);
-    }
+      if (opts.query) {
+        query = query.or(`name.ilike.%${sanitizeFilterInput(opts.query)}%,description.ilike.%${sanitizeFilterInput(opts.query)}%`);
+      }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }, 'searchEntities');
   }
 
   /**

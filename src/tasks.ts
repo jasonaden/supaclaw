@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
+import { wrapDatabaseOperation } from './error-handling';
 import type { SupaclawDeps, SupaclawConfig, Task } from './types';
 
 export class TaskManager {
@@ -27,23 +28,25 @@ export class TaskManager {
     parentTaskId?: string;
     metadata?: Record<string, unknown>;
   }): Promise<Task> {
-    const { data, error } = await this.supabase
-      .from('tasks')
-      .insert({
-        agent_id: this.agentId,
-        user_id: task.userId,
-        title: task.title,
-        description: task.description,
-        priority: task.priority ?? 0,
-        due_at: task.dueAt,
-        parent_task_id: task.parentTaskId,
-        metadata: task.metadata || {}
-      })
-      .select()
-      .single();
+    return wrapDatabaseOperation(async () => {
+      const { data, error } = await this.supabase
+        .from('tasks')
+        .insert({
+          agent_id: this.agentId,
+          user_id: task.userId,
+          title: task.title,
+          description: task.description,
+          priority: task.priority ?? 0,
+          due_at: task.dueAt,
+          parent_task_id: task.parentTaskId,
+          metadata: task.metadata || {}
+        })
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, 'createTask');
   }
 
   /**
@@ -57,31 +60,33 @@ export class TaskManager {
     dueAt: string;
     metadata: Record<string, unknown>;
   }>): Promise<Task> {
-    const updateData: Record<string, unknown> = {
-      updated_at: new Date().toISOString()
-    };
+    return wrapDatabaseOperation(async () => {
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString()
+      };
 
-    if (updates.title !== undefined) updateData['title'] = updates.title;
-    if (updates.description !== undefined) updateData['description'] = updates.description;
-    if (updates.status !== undefined) {
-      updateData['status'] = updates.status;
-      if (updates.status === 'done') {
-        updateData['completed_at'] = new Date().toISOString();
+      if (updates.title !== undefined) updateData['title'] = updates.title;
+      if (updates.description !== undefined) updateData['description'] = updates.description;
+      if (updates.status !== undefined) {
+        updateData['status'] = updates.status;
+        if (updates.status === 'done') {
+          updateData['completed_at'] = new Date().toISOString();
+        }
       }
-    }
-    if (updates.priority !== undefined) updateData['priority'] = updates.priority;
-    if (updates.dueAt !== undefined) updateData['due_at'] = updates.dueAt;
-    if (updates.metadata !== undefined) updateData['metadata'] = updates.metadata;
+      if (updates.priority !== undefined) updateData['priority'] = updates.priority;
+      if (updates.dueAt !== undefined) updateData['due_at'] = updates.dueAt;
+      if (updates.metadata !== undefined) updateData['metadata'] = updates.metadata;
 
-    const { data, error } = await this.supabase
-      .from('tasks')
-      .update(updateData)
-      .eq('id', taskId)
-      .select()
-      .single();
+      const { data, error } = await this.supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', taskId)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, 'updateTask');
   }
 
   /**
@@ -92,36 +97,40 @@ export class TaskManager {
     userId?: string;
     limit?: number;
   } = {}): Promise<Task[]> {
-    let query = this.supabase
-      .from('tasks')
-      .select()
-      .eq('agent_id', this.agentId)
-      .order('priority', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(opts.limit || 50);
+    return wrapDatabaseOperation(async () => {
+      let query = this.supabase
+        .from('tasks')
+        .select()
+        .eq('agent_id', this.agentId)
+        .order('priority', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(opts.limit || 50);
 
-    if (opts.status) {
-      query = query.eq('status', opts.status);
-    }
-    if (opts.userId) {
-      query = query.eq('user_id', opts.userId);
-    }
+      if (opts.status) {
+        query = query.eq('status', opts.status);
+      }
+      if (opts.userId) {
+        query = query.eq('user_id', opts.userId);
+      }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }, 'getTasks');
   }
 
   /**
    * Delete a task
    */
   async deleteTask(taskId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('tasks')
-      .delete()
-      .eq('id', taskId);
+    return wrapDatabaseOperation(async () => {
+      const { error } = await this.supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
 
-    if (error) throw error;
+      if (error) throw error;
+    }, 'deleteTask');
   }
 
   /**

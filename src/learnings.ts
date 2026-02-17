@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { sanitizeFilterInput } from './utils';
+import { wrapDatabaseOperation, wrapEmbeddingOperation } from './error-handling';
 import type { SupaclawDeps, SupaclawConfig, Learning } from './types';
 
 export class LearningManager {
@@ -30,12 +31,14 @@ export class LearningManager {
       }
 
       const model = this.config.embeddingModel || 'text-embedding-3-small';
-      const response = await this.openai.embeddings.create({
-        model,
-        input: text,
-      });
+      return wrapEmbeddingOperation(async () => {
+        const response = await this.openai!.embeddings.create({
+          model,
+          input: text,
+        });
 
-      return response.data[0]!.embedding;
+        return response.data[0]!.embedding;
+      }, 'generateEmbedding (learnings)');
     }
 
     // TODO: Add Voyage AI support
@@ -82,23 +85,25 @@ export class LearningManager {
     sessionId?: string;
     metadata?: Record<string, unknown>;
   }): Promise<Learning> {
-    const { data, error } = await this.supabase
-      .from('learnings')
-      .insert({
-        agent_id: this.agentId,
-        category: learning.category,
-        trigger: learning.trigger,
-        lesson: learning.lesson,
-        action: learning.action,
-        severity: learning.severity ?? 'info',
-        source_session_id: learning.sessionId,
-        metadata: learning.metadata || {}
-      })
-      .select()
-      .single();
+    return wrapDatabaseOperation(async () => {
+      const { data, error } = await this.supabase
+        .from('learnings')
+        .insert({
+          agent_id: this.agentId,
+          category: learning.category,
+          trigger: learning.trigger,
+          lesson: learning.lesson,
+          action: learning.action,
+          severity: learning.severity ?? 'info',
+          source_session_id: learning.sessionId,
+          metadata: learning.metadata || {}
+        })
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, 'learn');
   }
 
   /**
@@ -109,23 +114,25 @@ export class LearningManager {
     severity?: string;
     limit?: number;
   } = {}): Promise<Learning[]> {
-    let query = this.supabase
-      .from('learnings')
-      .select()
-      .eq('agent_id', this.agentId)
-      .order('created_at', { ascending: false })
-      .limit(opts.limit || 50);
+    return wrapDatabaseOperation(async () => {
+      let query = this.supabase
+        .from('learnings')
+        .select()
+        .eq('agent_id', this.agentId)
+        .order('created_at', { ascending: false })
+        .limit(opts.limit || 50);
 
-    if (opts.category) {
-      query = query.eq('category', opts.category);
-    }
-    if (opts.severity) {
-      query = query.eq('severity', opts.severity);
-    }
+      if (opts.category) {
+        query = query.eq('category', opts.category);
+      }
+      if (opts.severity) {
+        query = query.eq('severity', opts.severity);
+      }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }, 'getLearnings');
   }
 
   /**
@@ -134,16 +141,18 @@ export class LearningManager {
   async searchLearnings(query: string, opts: {
     limit?: number;
   } = {}): Promise<Learning[]> {
-    const { data, error } = await this.supabase
-      .from('learnings')
-      .select()
-      .eq('agent_id', this.agentId)
-      .or(`trigger.ilike.%${sanitizeFilterInput(query)}%,lesson.ilike.%${sanitizeFilterInput(query)}%,action.ilike.%${sanitizeFilterInput(query)}%`)
-      .order('created_at', { ascending: false })
-      .limit(opts.limit || 10);
+    return wrapDatabaseOperation(async () => {
+      const { data, error } = await this.supabase
+        .from('learnings')
+        .select()
+        .eq('agent_id', this.agentId)
+        .or(`trigger.ilike.%${sanitizeFilterInput(query)}%,lesson.ilike.%${sanitizeFilterInput(query)}%,action.ilike.%${sanitizeFilterInput(query)}%`)
+        .order('created_at', { ascending: false })
+        .limit(opts.limit || 10);
 
-    if (error) throw error;
-    return data || [];
+      if (error) throw error;
+      return data || [];
+    }, 'searchLearnings');
   }
 
   /**

@@ -9,19 +9,22 @@
  * - Learning export/reports
  */
 
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { vi } from 'vitest';
 import Supaclaw from '../src/index';
 
+const hasSupabase = !!process.env['SUPABASE_URL'] && !!process.env['SUPABASE_KEY'];
+
 const config = {
-  supabaseUrl: process.env.SUPABASE_URL || 'http://localhost:54321',
-  supabaseKey: process.env.SUPABASE_KEY || 'test-key',
+  supabaseUrl: process.env['SUPABASE_URL'] || 'http://localhost:54321',
+  supabaseKey: process.env['SUPABASE_KEY'] || 'test-key',
   agentId: 'test-agent-tasks-learnings',
-  openaiApiKey: process.env.OPENAI_API_KEY
+  openaiApiKey: process.env['OPENAI_API_KEY']
 };
 
 let memory: Supaclaw;
 
 beforeAll(async () => {
+  if (!hasSupabase) return;
   memory = new Supaclaw(config);
   await memory.initialize();
 });
@@ -40,7 +43,7 @@ afterAll(async () => {
 
 // ============ TASK DEPENDENCIES (Steps 71-73) ============
 
-describe('Task Dependencies', () => {
+describe.skipIf(!hasSupabase)('Task Dependencies', () => {
   test('should add task dependency', async () => {
     const task1 = await memory.createTask({
       title: 'Task 1 - Must be done first',
@@ -132,7 +135,7 @@ describe('Task Dependencies', () => {
 
 // ============ TASK TEMPLATES (Steps 72, 75) ============
 
-describe('Task Templates', () => {
+describe.skipIf(!hasSupabase)('Task Templates', () => {
   test('should create task template', async () => {
     const template = await memory.createTaskTemplate({
       name: 'Onboarding Template',
@@ -199,7 +202,7 @@ describe('Task Templates', () => {
 
 // ============ TASK REMINDERS (Step 74) ============
 
-describe('Task Reminders', () => {
+describe.skipIf(!hasSupabase)('Task Reminders', () => {
   test('should get tasks needing reminders', async () => {
     const now = new Date();
     const soon = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours from now
@@ -241,7 +244,7 @@ describe('Task Reminders', () => {
 
 // ============ LEARNING PATTERNS (Step 77) ============
 
-describe('Learning Patterns', () => {
+describe.skipIf(!hasSupabase)('Learning Patterns', () => {
   test('should detect learning patterns', async () => {
     // Create some test learnings
     await memory.learn({
@@ -302,7 +305,7 @@ describe('Learning Patterns', () => {
 
 // ============ LEARNING SIMILARITY SEARCH (Step 79) ============
 
-describe('Learning Similarity Search', () => {
+describe.skipIf(!hasSupabase)('Learning Similarity Search', () => {
   test('should find similar learnings (requires OpenAI)', async () => {
     if (!config.openaiApiKey) {
       console.warn('Skipping similarity test - no OpenAI API key');
@@ -347,7 +350,7 @@ describe('Learning Similarity Search', () => {
 
 // ============ LEARNING EXPORT/REPORT (Step 80) ============
 
-describe('Learning Export & Reports', () => {
+describe.skipIf(!hasSupabase)('Learning Export & Reports', () => {
   test('should export learnings to markdown report', async () => {
     await memory.learn({
       category: 'error',
@@ -402,7 +405,7 @@ describe('Learning Export & Reports', () => {
 
 // ============ INTEGRATION TESTS ============
 
-describe('Task & Learning Integration', () => {
+describe.skipIf(!hasSupabase)('Task & Learning Integration', () => {
   test('should track learnings from task failures', async () => {
     const task = await memory.createTask({
       title: 'Deploy to production',

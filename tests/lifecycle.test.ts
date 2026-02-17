@@ -3,44 +3,56 @@
  * Phase 6: Importance decay, consolidation, versioning, tagging, auto-cleanup
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { vi } from 'vitest';
 import { Supaclaw } from '../src/index';
+import type { SupaclawDeps } from '../src/types';
 
-// Mock Supabase client
+// Mock Supabase client with configurable single() result
+let mockSingleResult: { data: unknown; error: unknown } = { data: null, error: null };
+let mockListResult: { data: unknown[]; error: unknown } = { data: [], error: null };
+
 const mockSupabase = {
-  from: (table: string) => ({
-    select: () => mockSupabase.from(table),
-    insert: () => mockSupabase.from(table),
-    update: () => mockSupabase.from(table),
-    delete: () => mockSupabase.from(table),
-    eq: () => mockSupabase.from(table),
-    neq: () => mockSupabase.from(table),
-    lt: () => mockSupabase.from(table),
-    gt: () => mockSupabase.from(table),
-    gte: () => mockSupabase.from(table),
-    lte: () => mockSupabase.from(table),
-    is: () => mockSupabase.from(table),
-    not: () => mockSupabase.from(table),
-    in: () => mockSupabase.from(table),
-    order: () => mockSupabase.from(table),
-    limit: () => mockSupabase.from(table),
-    single: () => Promise.resolve({ data: null, error: null }),
-    then: (fn: any) => fn({ data: [], error: null })
-  })
+  from: (table: string) => {
+    const chain = {
+      select: () => chain,
+      insert: () => chain,
+      update: () => chain,
+      delete: () => chain,
+      eq: () => chain,
+      neq: () => chain,
+      lt: () => chain,
+      gt: () => chain,
+      gte: () => chain,
+      lte: () => chain,
+      is: () => chain,
+      not: () => chain,
+      in: () => chain,
+      order: () => chain,
+      limit: () => chain,
+      single: () => Promise.resolve(mockSingleResult),
+      then: (fn: any) => fn(mockListResult)
+    };
+    return chain;
+  }
 };
 
 describe('Memory Lifecycle Management', () => {
   let memory: Supaclaw;
 
   beforeEach(() => {
-    memory = new Supaclaw({
-      supabaseUrl: 'https://test.supabase.co',
-      supabaseKey: 'test-key',
+    mockSingleResult = { data: null, error: null };
+    mockListResult = { data: [], error: null };
+    const deps: SupaclawDeps = {
+      supabase: mockSupabase as any,
       agentId: 'test-agent',
-      embeddingProvider: 'none'
-    });
-    // @ts-ignore - Replace with mock
-    memory.supabase = mockSupabase;
+      config: {
+        supabaseUrl: 'https://test.supabase.co',
+        supabaseKey: 'test-key',
+        agentId: 'test-agent',
+        embeddingProvider: 'none'
+      }
+    };
+    memory = new Supaclaw(deps);
   });
 
   describe('Importance Decay', () => {
@@ -115,9 +127,7 @@ describe('Memory Lifecycle Management', () => {
         metadata: {}
       };
 
-      // @ts-ignore
-      mockSupabase.from('memories').single = () => 
-        Promise.resolve({ data: mockMemory, error: null });
+      mockSingleResult = { data: mockMemory, error: null };
 
       const result = await memory.versionMemory('mem-123');
 
@@ -144,9 +154,7 @@ describe('Memory Lifecycle Management', () => {
         }
       };
 
-      // @ts-ignore
-      mockSupabase.from('memories').single = () => 
-        Promise.resolve({ data: mockMemory, error: null });
+      mockSingleResult = { data: mockMemory, error: null };
 
       const versions = await memory.getMemoryVersions('mem-123');
 
@@ -163,9 +171,7 @@ describe('Memory Lifecycle Management', () => {
         metadata: {}
       };
 
-      // @ts-ignore
-      mockSupabase.from('memories').single = () => 
-        Promise.resolve({ data: mockMemory, error: null });
+      mockSingleResult = { data: mockMemory, error: null };
 
       const result = await memory.tagMemory('mem-123', ['important', 'work']);
 
@@ -180,9 +186,7 @@ describe('Memory Lifecycle Management', () => {
         }
       };
 
-      // @ts-ignore
-      mockSupabase.from('memories').single = () => 
-        Promise.resolve({ data: mockMemory, error: null });
+      mockSingleResult = { data: mockMemory, error: null };
 
       const result = await memory.untagMemory('mem-123', ['work']);
 

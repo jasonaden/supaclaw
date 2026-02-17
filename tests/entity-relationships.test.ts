@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { vi } from 'vitest';
 import Supaclaw from '../src/index';
 
 // Mock Supabase client for testing
@@ -380,12 +380,12 @@ describe('Entity Relationships', () => {
         { source: 'Alice', target: 'Tom', type: 'knows' }
       ];
 
-      const hanKnows = mockRelationships
-        .filter(r => r.source === 'Han')
+      const aliceKnows = mockRelationships
+        .filter(r => r.source === 'Alice')
         .map(r => r.target);
 
-      expect(hanKnows).toContain('Sarah');
-      expect(hanKnows).toContain('Tom');
+      expect(aliceKnows).toContain('Sarah');
+      expect(aliceKnows).toContain('Tom');
     });
 
     it('should detect transitive relationships', async () => {

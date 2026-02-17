@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { sanitizeFilterInput } from './utils';
+import { wrapDatabaseOperation, wrapEmbeddingOperation, validateInput } from './error-handling';
 import type { SupaclawDeps, SupaclawConfig, Memory } from './types';
 
 export class MemoryManager {
@@ -30,12 +31,14 @@ export class MemoryManager {
       }
 
       const model = this.config.embeddingModel || 'text-embedding-3-small';
-      const response = await this.openai.embeddings.create({
-        model,
-        input: text,
-      });
+      return wrapEmbeddingOperation(async () => {
+        const response = await this.openai!.embeddings.create({
+          model,
+          input: text,
+        });
 
-      return response.data[0]!.embedding;
+        return response.data[0]!.embedding;
+      }, 'generateEmbedding (memories)');
     }
 
     // TODO: Add Voyage AI support
@@ -82,27 +85,34 @@ export class MemoryManager {
     expiresAt?: string;
     metadata?: Record<string, unknown>;
   }): Promise<Memory> {
+    validateInput(
+      !!memory.content && memory.content.trim().length > 0,
+      'Memory content must be a non-empty string'
+    );
+
     // Generate embedding if provider configured
     const embedding = await this.generateEmbedding(memory.content);
 
-    const { data, error } = await this.supabase
-      .from('memories')
-      .insert({
-        agent_id: this.agentId,
-        user_id: memory.userId,
-        category: memory.category,
-        content: memory.content,
-        importance: memory.importance ?? 0.5,
-        source_session_id: memory.sessionId,
-        expires_at: memory.expiresAt,
-        embedding,
-        metadata: memory.metadata || {}
-      })
-      .select()
-      .single();
+    return wrapDatabaseOperation(async () => {
+      const { data, error } = await this.supabase
+        .from('memories')
+        .insert({
+          agent_id: this.agentId,
+          user_id: memory.userId,
+          category: memory.category,
+          content: memory.content,
+          importance: memory.importance ?? 0.5,
+          source_session_id: memory.sessionId,
+          expires_at: memory.expiresAt,
+          embedding,
+          metadata: memory.metadata || {}
+        })
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, 'remember');
   }
 
   /**
@@ -115,50 +125,59 @@ export class MemoryManager {
     minImportance?: number;
     minSimilarity?: number; // Cosine similarity threshold (0-1)
   } = {}): Promise<Memory[]> {
+    validateInput(
+      !!query && query.trim().length > 0,
+      'Recall query must be a non-empty string'
+    );
+
     // Generate query embedding for semantic search
     const queryEmbedding = await this.generateEmbedding(query);
 
     if (queryEmbedding) {
       // Use pgvector for semantic search
-      const { data, error } = await this.supabase.rpc('match_memories', {
-        query_embedding: queryEmbedding,
-        match_threshold: opts.minSimilarity ?? 0.7,
-        match_count: opts.limit || 10,
-        p_agent_id: this.agentId,
-        p_user_id: opts.userId,
-        p_category: opts.category,
-        p_min_importance: opts.minImportance
-      });
+      return wrapDatabaseOperation(async () => {
+        const { data, error } = await this.supabase.rpc('match_memories', {
+          query_embedding: queryEmbedding,
+          match_threshold: opts.minSimilarity ?? 0.7,
+          match_count: opts.limit || 10,
+          p_agent_id: this.agentId,
+          p_user_id: opts.userId,
+          p_category: opts.category,
+          p_min_importance: opts.minImportance
+        });
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data || [];
+      }, 'recall (semantic search)');
     }
 
     // Fallback to text search when no embeddings available
-    let q = this.supabase
-      .from('memories')
-      .select()
-      .eq('agent_id', this.agentId)
-      .order('importance', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(opts.limit || 10);
+    return wrapDatabaseOperation(async () => {
+      let q = this.supabase
+        .from('memories')
+        .select()
+        .eq('agent_id', this.agentId)
+        .order('importance', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(opts.limit || 10);
 
-    if (opts.userId) {
-      q = q.or(`user_id.eq.${sanitizeFilterInput(opts.userId)},user_id.is.null`);
-    }
-    if (opts.category) {
-      q = q.eq('category', opts.category);
-    }
-    if (opts.minImportance) {
-      q = q.gte('importance', opts.minImportance);
-    }
+      if (opts.userId) {
+        q = q.or(`user_id.eq.${sanitizeFilterInput(opts.userId)},user_id.is.null`);
+      }
+      if (opts.category) {
+        q = q.eq('category', opts.category);
+      }
+      if (opts.minImportance) {
+        q = q.gte('importance', opts.minImportance);
+      }
 
-    // Text search filter
-    q = q.ilike('content', `%${sanitizeFilterInput(query)}%`);
+      // Text search filter
+      q = q.ilike('content', `%${sanitizeFilterInput(query)}%`);
 
-    const { data, error } = await q;
-    if (error) throw error;
-    return data || [];
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    }, 'recall (text search)');
   }
 
   /**
@@ -205,12 +224,14 @@ export class MemoryManager {
    * Delete a memory
    */
   async forget(memoryId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('memories')
-      .delete()
-      .eq('id', memoryId);
+    return wrapDatabaseOperation(async () => {
+      const { error } = await this.supabase
+        .from('memories')
+        .delete()
+        .eq('id', memoryId);
 
-    if (error) throw error;
+      if (error) throw error;
+    }, 'forget');
   }
 
   /**
@@ -222,23 +243,25 @@ export class MemoryManager {
     limit?: number;
     offset?: number;
   } = {}): Promise<Memory[]> {
-    let query = this.supabase
-      .from('memories')
-      .select()
-      .eq('agent_id', this.agentId)
-      .order('created_at', { ascending: false })
-      .range(opts.offset || 0, (opts.offset || 0) + (opts.limit || 50) - 1);
+    return wrapDatabaseOperation(async () => {
+      let query = this.supabase
+        .from('memories')
+        .select()
+        .eq('agent_id', this.agentId)
+        .order('created_at', { ascending: false })
+        .range(opts.offset || 0, (opts.offset || 0) + (opts.limit || 50) - 1);
 
-    if (opts.userId) {
-      query = query.eq('user_id', opts.userId);
-    }
-    if (opts.category) {
-      query = query.eq('category', opts.category);
-    }
+      if (opts.userId) {
+        query = query.eq('user_id', opts.userId);
+      }
+      if (opts.category) {
+        query = query.eq('category', opts.category);
+      }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }, 'getMemories');
   }
 
   /**
