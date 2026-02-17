@@ -4,3 +4,7 @@ dist/
 .env.local
 *.log
 .DS_Store
+.supaclaw.json
+coverage/
+*.tsbuildinfo
+*.tgz

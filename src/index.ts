@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
+import { sanitizeFilterInput } from './utils';
 import {
   ContextBudget,
   ContextWindow,
@@ -696,7 +697,7 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
       .limit(opts.limit || 10);
 
     if (opts.userId) {
-      q = q.or(`user_id.eq.${opts.userId},user_id.is.null`);
+      q = q.or(`user_id.eq.${sanitizeFilterInput(opts.userId)},user_id.is.null`);
     }
     if (opts.category) {
       q = q.eq('category', opts.category);
@@ -706,7 +707,7 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
     }
 
     // Text search filter
-    q = q.ilike('content', `%${query}%`);
+    q = q.ilike('content', `%${sanitizeFilterInput(query)}%`);
 
     const { data, error } = await q;
     if (error) throw error;
@@ -859,17 +860,17 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
       updated_at: new Date().toISOString()
     };
 
-    if (updates.title) updateData.title = updates.title;
-    if (updates.description) updateData.description = updates.description;
-    if (updates.status) {
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.status !== undefined) {
       updateData.status = updates.status;
       if (updates.status === 'done') {
         updateData.completed_at = new Date().toISOString();
       }
     }
     if (updates.priority !== undefined) updateData.priority = updates.priority;
-    if (updates.dueAt) updateData.due_at = updates.dueAt;
-    if (updates.metadata) updateData.metadata = updates.metadata;
+    if (updates.dueAt !== undefined) updateData.due_at = updates.dueAt;
+    if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
 
     const { data, error } = await this.supabase
       .from('tasks')
@@ -1059,7 +1060,7 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
       .from('learnings')
       .select()
       .eq('agent_id', this.agentId)
-      .or(`trigger.ilike.%${query}%,lesson.ilike.%${query}%,action.ilike.%${query}%`)
+      .or(`trigger.ilike.%${sanitizeFilterInput(query)}%,lesson.ilike.%${sanitizeFilterInput(query)}%,action.ilike.%${sanitizeFilterInput(query)}%`)
       .order('created_at', { ascending: false })
       .limit(opts.limit || 10);
 
@@ -1772,11 +1773,11 @@ Format: {"entities": [{"type": "...", "name": "...", "description": "..."}]}`
   }>): Promise<Entity> {
     const updateData: Record<string, unknown> = {};
 
-    if (updates.name) updateData.name = updates.name;
-    if (updates.aliases) updateData.aliases = updates.aliases;
-    if (updates.description) updateData.description = updates.description;
-    if (updates.properties) updateData.properties = updates.properties;
-    if (updates.lastSeenAt) updateData.last_seen_at = updates.lastSeenAt;
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.aliases !== undefined) updateData.aliases = updates.aliases;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.properties !== undefined) updateData.properties = updates.properties;
+    if (updates.lastSeenAt !== undefined) updateData.last_seen_at = updates.lastSeenAt;
 
     // Increment mention count
     const entity = await this.supabase
@@ -1808,7 +1809,7 @@ Format: {"entities": [{"type": "...", "name": "...", "description": "..."}]}`
       .from('entities')
       .select()
       .eq('agent_id', this.agentId)
-      .or(`name.ilike.${nameOrAlias},aliases.cs.{${nameOrAlias}}`)
+      .or(`name.ilike.${sanitizeFilterInput(nameOrAlias)},aliases.cs.{${sanitizeFilterInput(nameOrAlias)}}`)
       .limit(1)
       .single();
 
@@ -1837,7 +1838,7 @@ Format: {"entities": [{"type": "...", "name": "...", "description": "..."}]}`
     }
 
     if (opts.query) {
-      query = query.or(`name.ilike.%${opts.query}%,description.ilike.%${opts.query}%`);
+      query = query.or(`name.ilike.%${sanitizeFilterInput(opts.query)}%,description.ilike.%${sanitizeFilterInput(opts.query)}%`);
     }
 
     const { data, error } = await query;
