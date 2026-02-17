@@ -25,7 +25,7 @@ The package is **READY** to publish but requires a one-time password from your a
 ### To Complete NPM Publish:
 
 ```bash
-cd /Users/hankim/clawd/supaclaw
+cd .
 
 # Get your 2FA code from authenticator app
 # Then run:
@@ -102,7 +102,7 @@ All development work is DONE. Only the npm publish 2FA step remains.
 ## 🔄 Quick Publish Command
 
 ```bash
-cd /Users/hankim/clawd/supaclaw
+cd .
 npm publish --otp=$(pbpaste)  # Paste 2FA code first, then run
 ```
 

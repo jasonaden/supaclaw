@@ -25,7 +25,7 @@ Supaclaw is a comprehensive memory system that replaces traditional file-based m
 npm install -g supaclaw
 
 # Or use the local build
-cd /Users/hankim/clawd/supaclaw
+cd .
 npm run build
 npm link
 
@@ -529,7 +529,7 @@ supaclaw search "query" --limit 5
 
 **Repo:** https://github.com/arephan/supaclaw  
 **Issues:** https://github.com/arephan/supaclaw/issues  
-**Docs:** See `/Users/hankim/clawd/supaclaw/README.md`
+**Docs:** See `./README.md`
 
 ## License
 
