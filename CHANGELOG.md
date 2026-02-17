@@ -5,6 +5,29 @@ All notable changes to Supaclaw will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Architecture**: Decomposed 2900-line god class into 6 domain modules (`SessionManager`, `MemoryManager`, `EntityManager`, `TaskManager`, `LearningManager`, `MaintenanceManager`) with `Supaclaw` as a thin facade
+- **DI support**: `Supaclaw` constructor now accepts `SupaclawDeps` for dependency injection (pre-built Supabase/OpenAI clients)
+- **TypeScript**: Enabled `noUncheckedIndexedAccess` and `noPropertyAccessFromIndexSignature`; eliminated all `any` types
+- **Package exports**: Added subpath exports (`supaclaw/errors`, `supaclaw/context`)
+- **Error handling**: Domain modules now use `wrapDatabaseOperation()`/`wrapEmbeddingOperation()` wrappers with retry and circuit breaker
+
+### Fixed
+- **Security**: PostgREST filter injection via `sanitizeFilterInput()` on all `.or()`/`.ilike()` calls
+- **Falsy bugs**: `updateTask()` and `updateEntity()` now correctly handle falsy values (0, empty string) using `!== undefined` checks
+- **Hardcoded paths**: Removed 4 hardcoded `/Users/hankim/clawd/supaclaw` references
+
+### Removed
+- Dead root files: `auto-log.ts` (contained hardcoded Supabase key), `conversation-logger.ts`, `memory-query.ts`, `migrate-memory-to-supabase.ts`, `smart-recall.ts`
+
+### Internal
+- Moved 17 planning docs from root to `docs/internal/` and `docs/guides/`
+- Added `vitest.config.ts` with `globals: true` and v8 coverage
+- Integration tests use `describe.skipIf(!hasSupabase)` guards
+- Added `.supaclaw.json`, `coverage/`, `*.tsbuildinfo`, `*.tgz` to `.gitignore`
+
 ## [1.0.0] - 2026-02-01
 
 ### 🎉 Initial Release
