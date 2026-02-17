@@ -42,7 +42,7 @@ describe('Phase 9: Parsers', () => {
 
 ## Projects
 
-- Working on OpenClaw Memory database
+- Working on Supaclaw database
 - Building AI agents
 `;
 

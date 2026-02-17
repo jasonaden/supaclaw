@@ -6,7 +6,7 @@
 
 ## Overview
 
-Phase 6 adds comprehensive lifecycle management features to OpenClaw Memory:
+Phase 6 adds comprehensive lifecycle management features to Supaclaw:
 - **Importance Decay:** Automatically reduce importance of old memories
 - **Consolidation:** Merge similar/duplicate memories
 - **Versioning:** Track historical changes to memories
@@ -40,7 +40,7 @@ console.log(`Average decay: ${result.avgDecay}`);
 
 **CLI:**
 ```bash
-openclaw-memory decay --days 7 --rate 0.1 --min 0.1
+supaclaw decay --days 7 --rate 0.1 --min 0.1
 ```
 
 ### 2. Memory Consolidation (`consolidateMemories`)
@@ -68,7 +68,7 @@ console.log(`Kept ${result.kept} unique memories`);
 
 **CLI:**
 ```bash
-openclaw-memory consolidate --threshold 0.9 --limit 100
+supaclaw consolidate --threshold 0.9 --limit 100
 ```
 
 ### 3. Memory Versioning
@@ -127,16 +127,16 @@ const precise = await memory.searchMemoriesByTags(['work', 'urgent'], {
 **CLI:**
 ```bash
 # Add tags
-openclaw-memory tag mem-123 important work
+supaclaw tag mem-123 important work
 
 # Remove tags
-openclaw-memory untag mem-123 work
+supaclaw untag mem-123 work
 
 # Search tags (match ANY)
-openclaw-memory search-tags work urgent
+supaclaw search-tags work urgent
 
 # Search tags (match ALL)
-openclaw-memory search-tags work urgent --all
+supaclaw search-tags work urgent --all
 ```
 
 ### 5. Auto-Cleanup (`cleanupOldSessions`)
@@ -170,13 +170,13 @@ const deleted = await memory.cleanupOldSessions({
 **CLI:**
 ```bash
 # Archive sessions older than 90 days
-openclaw-memory cleanup --days 90
+supaclaw cleanup --days 90
 
 # Delete sessions older than 180 days
-openclaw-memory cleanup --days 180 --delete
+supaclaw cleanup --days 180 --delete
 
 # Get cleanup statistics
-openclaw-memory cleanup-stats
+supaclaw cleanup-stats
 ```
 
 ### 6. Cleanup Statistics (`getCleanupStats`)
@@ -206,7 +206,7 @@ console.log(`  Orphaned: ${stats.orphanedMessages}`);
 
 **CLI:**
 ```bash
-openclaw-memory cleanup-stats
+supaclaw cleanup-stats
 ```
 
 ## Testing
@@ -246,16 +246,16 @@ npm test tests/lifecycle.test.ts
 # Run weekly maintenance
 
 # Decay old memories
-openclaw-memory decay --days 7
+supaclaw decay --days 7
 
 # Consolidate duplicates
-openclaw-memory consolidate --threshold 0.95
+supaclaw consolidate --threshold 0.95
 
 # Archive old sessions
-openclaw-memory cleanup --days 90
+supaclaw cleanup --days 90
 
 # Report stats
-openclaw-memory cleanup-stats
+supaclaw cleanup-stats
 ```
 
 ### 2. Smart Memory Management
@@ -362,7 +362,7 @@ Updated files:
 - Markdown export utilities
 
 **Phase 8:** Clawdbot Integration
-- Create openclaw-memory skill
+- Create supaclaw skill
 - Hook into session lifecycle
 - Replace memory_search/memory_get
 - Auto-log messages

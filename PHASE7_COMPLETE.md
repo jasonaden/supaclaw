@@ -77,7 +77,7 @@ CREATE TABLE entity_relationships (
 2. **find_related_entities(entity_id, max_depth, min_confidence)** - Graph traversal
 3. **get_entity_network_stats(agent)** - Network statistics
 
-## API Additions to OpenClawMemory
+## API Additions to Supaclaw
 
 ### New Methods
 
@@ -173,18 +173,18 @@ export interface EntityRelationship {
 
 ```bash
 # List entities
-openclaw-memory entities [--type <type>] [--limit <number>]
+supaclaw entities [--type <type>] [--limit <number>]
 
 # Show entity relationship graph
-openclaw-memory entity-graph <entityId> \
+supaclaw entity-graph <entityId> \
   [--depth <number>] \
   [--min-confidence <number>]
 
 # Network statistics
-openclaw-memory entity-stats
+supaclaw entity-stats
 
 # Extract entities and relationships from text
-openclaw-memory extract-entities "<text>" \
+supaclaw extract-entities "<text>" \
   [--openai-key <key>]
 ```
 
@@ -192,16 +192,16 @@ openclaw-memory extract-entities "<text>" \
 
 ```bash
 # List all person entities
-openclaw-memory entities --type person
+supaclaw entities --type person
 
 # Show Han's relationship graph (2 hops deep)
-openclaw-memory entity-graph abc-123 --depth 2
+supaclaw entity-graph abc-123 --depth 2
 
 # Extract from conversation
-openclaw-memory extract-entities "Alice works at TechCorp in San Francisco"
+supaclaw extract-entities "Alice works at TechCorp in San Francisco"
 
 # View network stats
-openclaw-memory entity-stats
+supaclaw entity-stats
 ```
 
 ## Migration File
@@ -216,7 +216,7 @@ Creates:
 
 Run migration:
 ```bash
-npx openclaw-memory migrate
+npx supaclaw migrate
 # Copy and run 003_entity_relationships.sql in Supabase SQL Editor
 ```
 
@@ -444,7 +444,7 @@ Potential Phase 8+ features:
 
 Phase 7 completes the entity relationship system. Suggested next phases:
 
-1. **Phase 8: Clawdbot Integration** - Build skill to use OpenClaw Memory
+1. **Phase 8: Clawdbot Integration** - Build skill to use Supaclaw
 2. **Phase 9: Advanced Features** - Multi-agent sharing, real-time updates
 3. **Phase 10: Production Polish** - Integration tests, performance optimization
 

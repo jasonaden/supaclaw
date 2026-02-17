@@ -1,5 +1,5 @@
 {
-  "name": "openclaw-memory",
+  "name": "supaclaw",
   "version": "1.0.0-beta",
   "description": "Semantic memory system for AI agents - replaces file-based memory with searchable database",
   "category": "memory",
@@ -7,7 +7,7 @@
   "author": "Arephan",
   "license": "MIT",
   "requirements": {
-    "npm": ["openclaw-memory"],
+    "npm": ["supaclaw"],
     "env": ["SUPABASE_URL", "SUPABASE_KEY", "OPENAI_API_KEY"]
   },
   "capabilities": [

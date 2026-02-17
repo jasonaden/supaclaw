@@ -33,7 +33,7 @@
    - `buildContextWindow()` - Combines all content types
    - `formatContextWindow()` - Multiple output formats
    - `getContextStats()` - Usage analytics
-   - Integration with OpenClawMemory class
+   - Integration with Supaclaw class
 
 ## New Files
 
@@ -76,7 +76,7 @@ Complete documentation with:
 7. Session tracking
 8. Budget comparison
 
-## API Additions to OpenClawMemory
+## API Additions to Supaclaw
 
 ### New Methods
 
@@ -205,7 +205,7 @@ Based on "Lost in the Middle: How Language Models Use Long Contexts" (Liu et al.
 - LLMs exhibit U-shaped attention patterns in long contexts
 - Performance degrades for information in the middle
 - Placing critical information at beginning/end improves accuracy
-- OpenClaw implements automatic mitigation via importance-based arrangement
+- Supaclaw implements automatic mitigation via importance-based arrangement
 
 ### Token Budgeting Strategy
 
@@ -271,9 +271,9 @@ const response = await llm.chat({
 ### With LangChain
 
 ```typescript
-import { OpenClawMemory } from 'openclaw-memory';
+import { Supaclaw } from 'supaclaw';
 
-const memory = new OpenClawMemory({...});
+const memory = new Supaclaw({...});
 
 const retriever = {
   getRelevantDocuments: async (query: string) => {

@@ -1,4 +1,4 @@
-# OpenClaw Memory - Development Plan
+# Supaclaw - Development Plan
 
 ## ✅ Phase 1: Foundation (DONE)
 1. ✅ Brainstorm use cases and benefits
@@ -7,7 +7,7 @@
 4. ✅ Write README with API docs
 5. ✅ Create migration SQL
 6. ✅ Implement core TypeScript types
-7. ✅ Implement OpenClawMemory class
+7. ✅ Implement Supaclaw class
 8. ✅ Push to GitHub
 
 ## 🔄 Phase 2: Core Features (DONE ✅ Items 9-13)
@@ -66,7 +66,7 @@
 45. ✅ Lost-in-middle mitigation
 46. ✅ Context window building
 47. ✅ Format & statistics
-48. ✅ Integration with OpenClawMemory
+48. ✅ Integration with Supaclaw
 49. ✅ Comprehensive tests
 50. ✅ Documentation & examples
 
@@ -80,7 +80,7 @@
 
 ## Phase 8: Clawdbot Integration (10-min session)
 57. [ ] Design skill structure
-58. [ ] Create openclaw-memory skill
+58. [ ] Create supaclaw skill
 59. [ ] Hook into session lifecycle
 60. [ ] Replace memory_search with recall
 61. [ ] Replace memory_get with getContext

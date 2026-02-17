@@ -11,42 +11,42 @@ Rewrote the CLI from manual argument parsing to use Commander.js for professiona
 
 **Commands Available:**
 
-1. **`openclaw-memory init`**
+1. **`supaclaw init`**
    - Interactive setup wizard
-   - Creates `.openclaw-memory.json` config
+   - Creates `.supaclaw.json` config
    - Validates Supabase URL and credentials
 
-2. **`openclaw-memory migrate`**
+2. **`supaclaw migrate`**
    - Displays migration SQL
    - Provides step-by-step instructions for Supabase dashboard
    - Links to SQL file location
 
-3. **`openclaw-memory test`**
+3. **`supaclaw test`**
    - Tests Supabase connection
    - Verifies all tables exist
    - Reports connectivity status
 
-4. **`openclaw-memory status`**
+4. **`supaclaw status`**
    - Shows database statistics
    - Displays record counts for all tables
    - Lists active sessions
 
-5. **`openclaw-memory search <query>`**
+5. **`supaclaw search <query>`**
    - Keyword-based memory search
    - Optional `--limit` flag
    - Full-text search on content and category
 
-6. **`openclaw-memory sessions`**
+6. **`supaclaw sessions`**
    - Lists recent sessions
    - Optional `--limit` and `--active` flags
    - Shows session details and summaries
 
-7. **`openclaw-memory export [path]`**
+7. **`supaclaw export [path]`**
    - Exports all memories to markdown
    - Groups by category
    - Includes metadata and importance scores
 
-8. **`openclaw-memory import <path>`**
+8. **`supaclaw import <path>`**
    - Imports memories from markdown
    - Simple list-based format
    - Supports category headers
@@ -109,7 +109,7 @@ npm test       # ✅ Tests written (require Supabase to run)
 
 **Commit:** ef65e42  
 **Message:** Phase 2 complete: CLI with Commander.js + unit tests  
-**Pushed to:** https://github.com/Arephan/openclaw-memory
+**Pushed to:** https://github.com/Arephan/supaclaw
 
 ## Verification
 
@@ -134,31 +134,31 @@ npm test       # ✅ Tests written (require Supabase to run)
 
 ```bash
 # Install (when published)
-npm install openclaw-memory
+npm install supaclaw
 
 # Setup
-npx openclaw-memory init
+npx supaclaw init
 
 # Migrate database
-npx openclaw-memory migrate
+npx supaclaw migrate
 
 # Test connection
-npx openclaw-memory test
+npx supaclaw test
 
 # Check status
-npx openclaw-memory status
+npx supaclaw status
 
 # Search memories
-npx openclaw-memory search "TypeScript"
+npx supaclaw search "TypeScript"
 
 # List sessions
-npx openclaw-memory sessions --limit 10 --active
+npx supaclaw sessions --limit 10 --active
 
 # Export to markdown
-npx openclaw-memory export memories.md
+npx supaclaw export memories.md
 
 # Import from markdown
-npx openclaw-memory import MEMORY.md
+npx supaclaw import MEMORY.md
 ```
 
 ---

@@ -1,5 +1,5 @@
 /**
- * Error handling and retry logic for OpenClaw Memory
+ * Error handling and retry logic for Supaclaw
  * 
  * Provides:
  * - Custom error types
@@ -9,35 +9,35 @@
  */
 
 // Custom error types
-export class OpenClawError extends Error {
+export class SupaclawError extends Error {
   constructor(message: string, public code: string, public details?: unknown) {
     super(message);
-    this.name = 'OpenClawError';
+    this.name = 'SupaclawError';
   }
 }
 
-export class DatabaseError extends OpenClawError {
+export class DatabaseError extends SupaclawError {
   constructor(message: string, details?: unknown) {
     super(message, 'DATABASE_ERROR', details);
     this.name = 'DatabaseError';
   }
 }
 
-export class EmbeddingError extends OpenClawError {
+export class EmbeddingError extends SupaclawError {
   constructor(message: string, details?: unknown) {
     super(message, 'EMBEDDING_ERROR', details);
     this.name = 'EmbeddingError';
   }
 }
 
-export class ValidationError extends OpenClawError {
+export class ValidationError extends SupaclawError {
   constructor(message: string, details?: unknown) {
     super(message, 'VALIDATION_ERROR', details);
     this.name = 'ValidationError';
   }
 }
 
-export class RateLimitError extends OpenClawError {
+export class RateLimitError extends SupaclawError {
   constructor(message: string, details?: unknown) {
     super(message, 'RATE_LIMIT_ERROR', details);
     this.name = 'RateLimitError';
@@ -136,7 +136,7 @@ export class CircuitBreaker {
         this.state = 'half-open';
         this.successes = 0;
       } else {
-        throw new OpenClawError(
+        throw new SupaclawError(
           'Circuit breaker is open',
           'CIRCUIT_BREAKER_OPEN',
           { failures: this.failures, lastFailureTime: this.lastFailureTime }
@@ -293,7 +293,7 @@ export async function withTimeout<T>(
   return Promise.race([
     promise,
     new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new OpenClawError(errorMessage, 'TIMEOUT')), timeoutMs)
+      setTimeout(() => reject(new SupaclawError(errorMessage, 'TIMEOUT')), timeoutMs)
     ),
   ]);
 }

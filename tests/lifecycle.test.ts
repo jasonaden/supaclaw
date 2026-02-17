@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { OpenClawMemory } from '../src/index';
+import { Supaclaw } from '../src/index';
 
 // Mock Supabase client
 const mockSupabase = {
@@ -30,10 +30,10 @@ const mockSupabase = {
 };
 
 describe('Memory Lifecycle Management', () => {
-  let memory: OpenClawMemory;
+  let memory: Supaclaw;
 
   beforeEach(() => {
-    memory = new OpenClawMemory({
+    memory = new Supaclaw({
       supabaseUrl: 'https://test.supabase.co',
       supabaseKey: 'test-key',
       agentId: 'test-agent',

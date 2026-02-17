@@ -1,12 +1,12 @@
-# OpenClaw Memory - Complete Roadmap (100 Steps)
+# Supaclaw - Complete Roadmap (100 Steps)
 
-**Goal:** Replace all markdown-based memory with a single `npm install openclaw-memory` that solves EVERY memory problem AI agents face.
+**Goal:** Replace all markdown-based memory with a single `npm install supaclaw` that solves EVERY memory problem AI agents face.
 
 ---
 
 ## Problems This Solves (From Research)
 
-| Problem | How OpenClaw Memory Fixes It |
+| Problem | How Supaclaw Fixes It |
 |---------|------------------------------|
 | **Context window limits** | Semantic search returns only relevant memories, not everything |
 | **LLMs are stateless** | Persistent Supabase database survives any session restart |
@@ -31,7 +31,7 @@
 1. ✅ Research pain points (context window, forgetting, costs)
 2. ✅ Design database schema (6 core tables)
 3. ✅ Create TypeScript types for all entities
-4. ✅ Implement OpenClawMemory class
+4. ✅ Implement Supaclaw class
 5. ✅ Write SQL migrations
 6. ✅ Set up npm package structure
 7. ✅ Write README with API docs
@@ -39,13 +39,13 @@
 
 ### Phase 2: CLI & Testing ✅ (Steps 9-20) - DONE
 9. ✅ Create CLI entry point (src/cli.ts)
-10. ✅ Implement `openclaw-memory init` - guided setup
-11. ✅ Implement `openclaw-memory migrate` - run SQL
-12. ✅ Implement `openclaw-memory status` - show stats
-13. ✅ Implement `openclaw-memory search <query>` - search memories
-14. ✅ Implement `openclaw-memory sessions` - list sessions
-15. ✅ Implement `openclaw-memory export` - dump to markdown
-16. ✅ Implement `openclaw-memory import` - load from markdown
+10. ✅ Implement `supaclaw init` - guided setup
+11. ✅ Implement `supaclaw migrate` - run SQL
+12. ✅ Implement `supaclaw status` - show stats
+13. ✅ Implement `supaclaw search <query>` - search memories
+14. ✅ Implement `supaclaw sessions` - list sessions
+15. ✅ Implement `supaclaw export` - dump to markdown
+16. ✅ Implement `supaclaw import` - load from markdown
 17. ✅ Add connection test utility
 18. ✅ Write unit tests (sessions)
 19. ✅ Write unit tests (messages)
@@ -134,7 +134,7 @@
 88. [ ] Sync bidirectional (DB ↔ markdown)
 
 ### Phase 10: Clawdbot Integration ✅ (Steps 89-95) - DONE
-89. ✅ Create openclaw-memory skill
+89. ✅ Create supaclaw skill
 90. ✅ Auto-inject memory into system prompt
 91. ✅ Replace memory_search tool
 92. ✅ Replace memory_get tool
@@ -177,12 +177,12 @@
 
 ## What Users Get
 
-After `npm install openclaw-memory`:
+After `npm install supaclaw`:
 
 ```typescript
-import { OpenClawMemory } from 'openclaw-memory';
+import { Supaclaw } from 'supaclaw';
 
-const memory = new OpenClawMemory({
+const memory = new Supaclaw({
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseKey: process.env.SUPABASE_KEY,
   agentId: 'my-agent'
@@ -246,14 +246,14 @@ await memory.endSession(session.id);
 1. **Local Supabase (Docker)**
    ```bash
    npx supabase start  # Runs local Supabase
-   openclaw-memory init --local
+   supaclaw init --local
    ```
 
 2. **Direct Postgres**
    - Skip Supabase entirely
    - Connect to any Postgres with pgvector
    ```bash
-   openclaw-memory init --postgres postgres://localhost:5432/memory
+   supaclaw init --postgres postgres://localhost:5432/memory
    ```
 
 3. **SQLite Mode (Zero Dependencies)**
@@ -261,12 +261,12 @@ await memory.endSession(session.id);
    - No server required
    - Uses better-sqlite3 + sqlite-vss for vectors
    ```bash
-   openclaw-memory init --sqlite ~/.openclaw/memory.db
+   supaclaw init --sqlite ~/.supaclaw/memory.db
    ```
 
 4. **In-Memory Mode (Testing)**
    ```bash
-   openclaw-memory init --memory
+   supaclaw init --memory
    ```
 
 ### Implementation Steps:

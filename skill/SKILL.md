@@ -1,4 +1,4 @@
-# OpenClaw Memory - Clawdbot Skill
+# Supaclaw - Clawdbot Skill
 
 **Status:** Phase 10 (Clawdbot Integration)  
 **Version:** 1.0.0-beta  
@@ -6,7 +6,7 @@
 
 ## Overview
 
-OpenClaw Memory is a comprehensive memory system that replaces traditional file-based memory (MEMORY.md, TODO.md, etc.) with a semantic, searchable database.
+Supaclaw is a comprehensive memory system that replaces traditional file-based memory (MEMORY.md, TODO.md, etc.) with a semantic, searchable database.
 
 **What it solves:**
 - ✅ No more loading 50KB MEMORY.md every turn
@@ -22,18 +22,18 @@ OpenClaw Memory is a comprehensive memory system that replaces traditional file-
 
 ```bash
 # Install from npm
-npm install -g openclaw-memory
+npm install -g supaclaw
 
 # Or use the local build
-cd /Users/hankim/clawd/openclaw-memory
+cd /Users/hankim/clawd/supaclaw
 npm run build
 npm link
 
 # Initialize (creates database, runs migrations)
-openclaw-memory init
+supaclaw init
 
 # Import existing Clawdbot memories
-openclaw-memory import-all ~/clawd --user-id han
+supaclaw import-all ~/clawd --user-id han
 ```
 
 ### 2. Configure Environment
@@ -48,7 +48,7 @@ export OPENAI_API_KEY="sk-..." # For embeddings & auto-summarization
 
 ### 3. Integration with Clawdbot
 
-OpenClaw Memory integrates seamlessly with Clawdbot through:
+Supaclaw integrates seamlessly with Clawdbot through:
 1. **Auto-logging** - Every message is automatically captured
 2. **Semantic search** - Replaces `memory_search` with vector search
 3. **Context injection** - Relevant memories auto-loaded into prompts
@@ -60,76 +60,76 @@ OpenClaw Memory integrates seamlessly with Clawdbot through:
 
 ```bash
 # Search memories semantically
-openclaw-memory search "user preferences for code style"
+supaclaw search "user preferences for code style"
 
 # Get all memories in a category
-openclaw-memory memories --category preferences
+supaclaw memories --category preferences
 
 # Export memories to markdown
-openclaw-memory export ~/backup/memories.md
+supaclaw export ~/backup/memories.md
 ```
 
 ### Session Management
 
 ```bash
 # List recent sessions
-openclaw-memory sessions --limit 20
+supaclaw sessions --limit 20
 
 # Export a session to markdown
-openclaw-memory session <session-id> --export
+supaclaw session <session-id> --export
 
 # Resume a session (get context)
-openclaw-memory resume <session-id>
+supaclaw resume <session-id>
 ```
 
 ### Task Management
 
 ```bash
 # List pending tasks
-openclaw-memory tasks --status pending
+supaclaw tasks --status pending
 
 # Create a new task
-openclaw-memory task create "Finish Phase 10" --priority 3
+supaclaw task create "Finish Phase 10" --priority 3
 
 # Update task status
-openclaw-memory task update <task-id> --status done
+supaclaw task update <task-id> --status done
 
 # Get upcoming tasks (due soon)
-openclaw-memory tasks --upcoming 24h
+supaclaw tasks --upcoming 24h
 ```
 
 ### Learning Management
 
 ```bash
 # List all learnings
-openclaw-memory learnings
+supaclaw learnings
 
 # Search learnings by topic
-openclaw-memory learnings --search "API errors"
+supaclaw learnings --search "API errors"
 
 # Export learnings report
-openclaw-memory learnings --export ~/learnings-report.md
+supaclaw learnings --export ~/learnings-report.md
 ```
 
 ### Database
 
 ```bash
 # Show database status
-openclaw-memory status
+supaclaw status
 
 # Run migrations
-openclaw-memory migrate
+supaclaw migrate
 
 # Test connection
-openclaw-memory test
+supaclaw test
 ```
 
 ## Programmatic Usage (TypeScript/JavaScript)
 
 ```typescript
-import { OpenClawMemory } from 'openclaw-memory';
+import { Supaclaw } from 'supaclaw';
 
-const memory = new OpenClawMemory({
+const memory = new Supaclaw({
   supabaseUrl: process.env.SUPABASE_URL!,
   supabaseKey: process.env.SUPABASE_KEY!,
   agentId: 'hans-assistant',
@@ -370,12 +370,12 @@ async function onHeartbeat() {
 
 ## Projects
 
-Working on OpenClaw Memory. Building AI agents.
+Working on Supaclaw. Building AI agents.
 ```
 
 **After:**
 ```bash
-openclaw-memory import-memory-md ~/clawd/MEMORY.md
+supaclaw import-memory-md ~/clawd/MEMORY.md
 ```
 
 **Result:**
@@ -395,7 +395,7 @@ openclaw-memory import-memory-md ~/clawd/MEMORY.md
 
 **After:**
 ```bash
-openclaw-memory import-daily-logs ~/clawd/memory --user-id han
+supaclaw import-daily-logs ~/clawd/memory --user-id han
 ```
 
 **Result:**
@@ -415,7 +415,7 @@ openclaw-memory import-daily-logs ~/clawd/memory --user-id han
 
 **After:**
 ```bash
-openclaw-memory import-todo-md ~/clawd/TODO.md
+supaclaw import-todo-md ~/clawd/TODO.md
 ```
 
 **Result:**
@@ -435,7 +435,7 @@ openclaw-memory import-todo-md ~/clawd/TODO.md
 
 **After:**
 ```bash
-openclaw-memory import-learnings-md ~/clawd/LEARNINGS.md
+supaclaw import-learnings-md ~/clawd/LEARNINGS.md
 ```
 
 **Result:**
@@ -466,17 +466,17 @@ openclaw-memory import-learnings-md ~/clawd/LEARNINGS.md
 
 ```bash
 # Test database connection
-openclaw-memory test
+supaclaw test
 
 # Check status
-openclaw-memory status
+supaclaw status
 ```
 
 ### Missing Tables
 
 ```bash
 # Run migrations
-openclaw-memory migrate
+supaclaw migrate
 ```
 
 ### No Search Results
@@ -487,20 +487,20 @@ Check if embeddings are enabled:
 echo $OPENAI_API_KEY
 
 # Search with fallback to keyword
-openclaw-memory search "your query" --fallback
+supaclaw search "your query" --fallback
 ```
 
 ### Performance Issues
 
 ```bash
 # Add indexes (migrations include these)
-openclaw-memory migrate
+supaclaw migrate
 
 # Clear expired memories
-openclaw-memory cleanup --expired
+supaclaw cleanup --expired
 
 # Limit search results
-openclaw-memory search "query" --limit 5
+supaclaw search "query" --limit 5
 ```
 
 ## Roadmap
@@ -527,9 +527,9 @@ openclaw-memory search "query" --limit 5
 
 ## Support
 
-**Repo:** https://github.com/arephan/openclaw-memory  
-**Issues:** https://github.com/arephan/openclaw-memory/issues  
-**Docs:** See `/Users/hankim/clawd/openclaw-memory/README.md`
+**Repo:** https://github.com/arephan/supaclaw  
+**Issues:** https://github.com/arephan/supaclaw/issues  
+**Docs:** See `/Users/hankim/clawd/supaclaw/README.md`
 
 ## License
 

@@ -1,4 +1,4 @@
--- OpenClaw Memory - Vector Search Functions
+-- Supaclaw - Vector Search Functions
 -- Run this in your Supabase SQL editor after 001_initial.sql
 
 -- Function: Vector similarity search for memories

@@ -1,4 +1,4 @@
--- OpenClaw Memory - Initial Schema
+-- Supaclaw - Initial Schema
 -- Run this in your Supabase SQL editor
 
 -- Enable vector extension for semantic search

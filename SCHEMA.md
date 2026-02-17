@@ -1,4 +1,4 @@
-# OpenClaw Memory - Database Schema
+# Supaclaw - Database Schema
 
 ## Core Tables
 
@@ -167,9 +167,9 @@ AND user_id = $1;
 ## API Design (npm package)
 
 ```typescript
-import { OpenClawMemory } from 'openclaw-memory';
+import { Supaclaw } from 'supaclaw';
 
-const memory = new OpenClawMemory({
+const memory = new Supaclaw({
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseKey: process.env.SUPABASE_KEY,
   agentId: 'main'

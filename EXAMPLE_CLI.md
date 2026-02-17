@@ -1,11 +1,11 @@
-# OpenClaw Memory CLI - Quick Start
+# Supaclaw CLI - Quick Start
 
 ## Installation
 
 ```bash
-npm install openclaw-memory
+npm install supaclaw
 # or globally:
-npm install -g openclaw-memory
+npm install -g supaclaw
 ```
 
 ## Setup
@@ -13,7 +13,7 @@ npm install -g openclaw-memory
 ### 1. Initialize Configuration
 
 ```bash
-npx openclaw-memory init
+npx supaclaw init
 ```
 
 You'll be prompted for:
@@ -21,7 +21,7 @@ You'll be prompted for:
 - Supabase anon/service key (from your project API settings)
 - Agent ID (e.g., "hans-assistant")
 
-This creates `.openclaw-memory.json`:
+This creates `.supaclaw.json`:
 
 ```json
 {
@@ -34,7 +34,7 @@ This creates `.openclaw-memory.json`:
 ### 2. Run Migrations
 
 ```bash
-npx openclaw-memory migrate
+npx supaclaw migrate
 ```
 
 This will display the SQL to run in your Supabase SQL Editor. Copy and paste it into:
@@ -44,12 +44,12 @@ This will display the SQL to run in your Supabase SQL Editor. Copy and paste it 
 ### 3. Verify Setup
 
 ```bash
-npx openclaw-memory status
+npx supaclaw status
 ```
 
 Output:
 ```
-📊 OpenClaw Memory - Status
+📊 Supaclaw - Status
 
 Agent ID: hans-assistant
 Supabase: https://xxx.supabase.co
@@ -66,14 +66,14 @@ Database Statistics:
 ## Usage in Code
 
 ```typescript
-import OpenClawMemory from 'openclaw-memory';
+import Supaclaw from 'supaclaw';
 import { readFileSync } from 'fs';
 
 // Load config
-const config = JSON.parse(readFileSync('.openclaw-memory.json', 'utf-8'));
+const config = JSON.parse(readFileSync('.supaclaw.json', 'utf-8'));
 
 // Initialize
-const memory = new OpenClawMemory(config);
+const memory = new Supaclaw(config);
 
 // Start a session
 const session = await memory.startSession({
@@ -120,16 +120,16 @@ await memory.endSession(session.id, {
 
 ```bash
 # Initialize config
-openclaw-memory init
+supaclaw init
 
 # Show migration SQL
-openclaw-memory migrate
+supaclaw migrate
 
 # Check database status
-openclaw-memory status
+supaclaw status
 
 # Help
-openclaw-memory help
+supaclaw help
 ```
 
 ## Next Steps

@@ -78,28 +78,28 @@
 
 ```bash
 # Dependencies
-openclaw-memory task-deps <taskId>
-openclaw-memory task-add-dep <taskId> <dependsOn>
-openclaw-memory task-ready
+supaclaw task-deps <taskId>
+supaclaw task-add-dep <taskId> <dependsOn>
+supaclaw task-ready
 
 # Templates
-openclaw-memory task-template <name> --file <json>
-openclaw-memory task-templates
-openclaw-memory task-apply-template <templateId>
+supaclaw task-template <name> --file <json>
+supaclaw task-templates
+supaclaw task-apply-template <templateId>
 
 # Reminders
-openclaw-memory task-reminders --hours 24
+supaclaw task-reminders --hours 24
 
 # Patterns
-openclaw-memory learning-patterns
-openclaw-memory learning-recommend <context>
+supaclaw learning-patterns
+supaclaw learning-recommend <context>
 
 # Similarity
-openclaw-memory learning-similar <learningId>
+supaclaw learning-similar <learningId>
 
 # Export
-openclaw-memory learning-export --output learnings.md
-openclaw-memory learning-export-json --output learnings.json
+supaclaw learning-export --output learnings.md
+supaclaw learning-export-json --output learnings.json
 ```
 
 ## 🧪 Testing
@@ -138,5 +138,5 @@ All code is:
 ---
 
 **Status:** Phase 8 COMPLETE ✅  
-**Repository:** https://github.com/Arephan/openclaw-memory  
+**Repository:** https://github.com/Arephan/supaclaw  
 **Commit:** be2b6e0

@@ -45,7 +45,7 @@ Implemented semantic search using PostgreSQL pgvector:
 
 ### Enhanced API Methods
 
-**OpenClawMemory Class:**
+**Supaclaw Class:**
 
 ```typescript
 // Generate embeddings automatically
@@ -81,16 +81,16 @@ const similar = await memory.findSimilarMemories(memoryId, {
 
 ```bash
 # Traditional keyword search (default)
-npx openclaw-memory search "TypeScript" --limit 10
+npx supaclaw search "TypeScript" --limit 10
 
 # Semantic search (requires OPENAI_API_KEY)
-npx openclaw-memory search "coding best practices" \
+npx supaclaw search "coding best practices" \
   --mode semantic \
   --min-similarity 0.75 \
   --limit 10
 
 # Hybrid search (best results)
-npx openclaw-memory search "AI agent patterns" \
+npx supaclaw search "AI agent patterns" \
   --mode hybrid \
   --limit 15
 ```
@@ -106,7 +106,7 @@ npx openclaw-memory search "AI agent patterns" \
 **New Config Options:**
 
 ```typescript
-const memory = new OpenClawMemory({
+const memory = new Supaclaw({
   supabaseUrl: 'https://xxx.supabase.co',
   supabaseKey: 'your-key',
   agentId: 'your-agent',
@@ -182,18 +182,18 @@ No breaking changes - existing code continues to work.
 ```bash
 # Setup
 export OPENAI_API_KEY="sk-..."
-npx openclaw-memory init
-npx openclaw-memory migrate  # Run both 001 and 002 migrations
+npx supaclaw init
+npx supaclaw migrate  # Run both 001 and 002 migrations
 
 # Add test memories
 # (Use API or import)
 
 # Test semantic search
-npx openclaw-memory search "machine learning" --mode semantic
+npx supaclaw search "machine learning" --mode semantic
 # Should find memories about AI, models, training even without exact keywords
 
 # Test hybrid search
-npx openclaw-memory search "coding" --mode hybrid
+npx supaclaw search "coding" --mode hybrid
 # Should rank programming-related memories high
 ```
 

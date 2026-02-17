@@ -20,7 +20,7 @@ The CLI is at `dist/cli.js` (bin: `supaclaw`). Test CLI commands via `npx supacl
 ## Architecture
 
 ### Core Module (`src/index.ts`)
-The `OpenClawMemory` class (~2500 lines) is the main API surface. It wraps a Supabase client and optional OpenAI client for embeddings. All database tables are scoped by `agent_id`. Key domains:
+The `Supaclaw` class (~2500 lines) is the main API surface. It wraps a Supabase client and optional OpenAI client for embeddings. All database tables are scoped by `agent_id`. Key domains:
 - **Sessions/Messages** — conversation lifecycle (start, add messages, end with optional AI summary)
 - **Memories** — long-term storage with importance scores, semantic search (`recall`/`hybridRecall`), tagging, versioning, decay, and consolidation
 - **Entities** — named entity extraction/storage with relationship graph (multi-hop traversal via `findRelatedEntities`)
@@ -30,10 +30,10 @@ The `OpenClawMemory` class (~2500 lines) is the main API surface. It wraps a Sup
 
 ### Supporting Modules
 - **`src/context-manager.ts`** — Token budgeting, lost-in-middle mitigation, adaptive budget allocation. Exports `createContextBudget`, `buildContextWindow`, `formatContextWindow`.
-- **`src/clawdbot-integration.ts`** — `ClawdbotMemoryIntegration` class wrapping OpenClawMemory for chatbot use (auto-logging, session management, context injection).
+- **`src/clawdbot-integration.ts`** — `ClawdbotMemoryIntegration` class wrapping Supaclaw for chatbot use (auto-logging, session management, context injection).
 - **`src/parsers.ts`** — Parsers for importing Clawdbot file-based memory (MEMORY.md, daily logs, TODO.md, LEARNINGS.md) into database format.
-- **`src/error-handling.ts`** — Custom error hierarchy (`OpenClawError` → `DatabaseError`/`EmbeddingError`/`ValidationError`/`RateLimitError`), retry with exponential backoff, circuit breaker pattern.
-- **`src/cli.ts`** — Commander-based CLI with 30+ commands. Config stored in `.openclaw-memory.json`.
+- **`src/error-handling.ts`** — Custom error hierarchy (`SupaclawError` → `DatabaseError`/`EmbeddingError`/`ValidationError`/`RateLimitError`), retry with exponential backoff, circuit breaker pattern.
+- **`src/cli.ts`** — Commander-based CLI with 30+ commands. Config stored in `.supaclaw.json`.
 
 ### Database Schema
 Six tables in Supabase/Postgres: `sessions`, `messages`, `memories`, `entities`, `entity_relationships`, `tasks`, `learnings`. Migrations in `migrations/`. Embeddings use pgvector (`VECTOR(1536)`) with IVFFlat index.

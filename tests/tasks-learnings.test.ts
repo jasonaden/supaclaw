@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
-import OpenClawMemory from '../src/index';
+import Supaclaw from '../src/index';
 
 const config = {
   supabaseUrl: process.env.SUPABASE_URL || 'http://localhost:54321',
@@ -19,10 +19,10 @@ const config = {
   openaiApiKey: process.env.OPENAI_API_KEY
 };
 
-let memory: OpenClawMemory;
+let memory: Supaclaw;
 
 beforeAll(async () => {
-  memory = new OpenClawMemory(config);
+  memory = new Supaclaw(config);
   await memory.initialize();
 });
 

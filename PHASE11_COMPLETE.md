@@ -6,7 +6,7 @@
 
 ## What Was Built
 
-Phase 11 finalized OpenClaw Memory for production release with comprehensive error handling, bundle optimization, and official npm publication.
+Phase 11 finalized Supaclaw for production release with comprehensive error handling, bundle optimization, and official npm publication.
 
 ### Core Files Added/Updated
 
@@ -47,11 +47,11 @@ Phase 11 finalized OpenClaw Memory for production release with comprehensive err
 **Custom Error Types:**
 ```typescript
 // Specific error types for better handling
-class OpenClawError extends Error
-class DatabaseError extends OpenClawError
-class EmbeddingError extends OpenClawError
-class ValidationError extends OpenClawError
-class RateLimitError extends OpenClawError
+class SupaclawError extends Error
+class DatabaseError extends SupaclawError
+class EmbeddingError extends SupaclawError
+class ValidationError extends SupaclawError
+class RateLimitError extends SupaclawError
 ```
 
 **Retry Logic:**
@@ -138,7 +138,7 @@ dist/              260 KB total
 **Tree-Shaking:**
 ```typescript
 // Users can import only what they need
-import { OpenClawMemory } from 'openclaw-memory';
+import { Supaclaw } from 'supaclaw';
 // ✓ Only ~80KB imported, not full 260KB
 ```
 
@@ -164,7 +164,7 @@ import { OpenClawMemory } from 'openclaw-memory';
 ### ✅ Step 99: Publish to npm
 
 **What it does:**
-- Published to npm as `openclaw-memory`
+- Published to npm as `supaclaw`
 - Public package (no auth required to install)
 - Includes all compiled code + types
 - Includes migrations and docs
@@ -172,21 +172,21 @@ import { OpenClawMemory } from 'openclaw-memory';
 **Installation:**
 ```bash
 # Install globally for CLI
-npm install -g openclaw-memory
+npm install -g supaclaw
 
 # Or install as library
-npm install openclaw-memory
+npm install supaclaw
 ```
 
 **Package Registry:**
-- **Name:** `openclaw-memory`
+- **Name:** `supaclaw`
 - **Version:** 1.0.0
 - **License:** MIT
-- **Registry:** https://www.npmjs.com/package/openclaw-memory
+- **Registry:** https://www.npmjs.com/package/supaclaw
 
 **What's Included:**
 ```
-openclaw-memory@1.0.0
+supaclaw@1.0.0
 ├── dist/               (compiled JS + types)
 ├── migrations/         (SQL schema)
 ├── README.md
@@ -196,9 +196,9 @@ openclaw-memory@1.0.0
 ```
 
 **Benefits:**
-- Zero-config installation: `npm install openclaw-memory`
-- CLI auto-available: `openclaw-memory init`
-- Importable as library: `import { OpenClawMemory } from 'openclaw-memory'`
+- Zero-config installation: `npm install supaclaw`
+- CLI auto-available: `supaclaw init`
+- Importable as library: `import { Supaclaw } from 'supaclaw'`
 - Versioned releases (semantic versioning)
 
 ### ✅ Step 100: GitHub Release v1.0.0
@@ -217,9 +217,9 @@ openclaw-memory@1.0.0
 - 🎯 Installation instructions
 
 **GitHub Release:**
-- **Repository:** https://github.com/Arephan/openclaw-memory
+- **Repository:** https://github.com/Arephan/supaclaw
 - **Tag:** v1.0.0
-- **Title:** OpenClaw Memory v1.0.0 - Production Ready
+- **Title:** Supaclaw v1.0.0 - Production Ready
 - **Description:** See CHANGELOG.md
 
 **Benefits:**
@@ -308,22 +308,22 @@ openclaw-memory@1.0.0
 ### Global Install (CLI)
 
 ```bash
-npm install -g openclaw-memory
-openclaw-memory init
+npm install -g supaclaw
+supaclaw init
 ```
 
 ### Library Install
 
 ```bash
-npm install openclaw-memory
+npm install supaclaw
 ```
 
 ### Quick Start
 
 ```typescript
-import { OpenClawMemory } from 'openclaw-memory';
+import { Supaclaw } from 'supaclaw';
 
-const memory = new OpenClawMemory({
+const memory = new Supaclaw({
   supabaseUrl: process.env.SUPABASE_URL!,
   supabaseKey: process.env.SUPABASE_KEY!,
   agentId: 'my-agent',
@@ -354,7 +354,7 @@ const results = await memory.searchMemories({
 ### Clawdbot Integration
 
 ```typescript
-import { createClawdbotIntegration } from 'openclaw-memory';
+import { createClawdbotIntegration } from 'supaclaw';
 
 const integration = createClawdbotIntegration({
   supabaseUrl: process.env.SUPABASE_URL!,
@@ -414,10 +414,10 @@ npm test
 - skill/example-integration.ts - Code examples
 
 **GitHub:**
-- https://github.com/Arephan/openclaw-memory
+- https://github.com/Arephan/supaclaw
 
 **NPM:**
-- https://www.npmjs.com/package/openclaw-memory
+- https://www.npmjs.com/package/supaclaw
 
 ## Migration from File-Based Memory
 
@@ -439,11 +439,11 @@ npm test
 - No session tracking
 - Manual memory curation
 
-### After (OpenClaw Memory)
+### After (Supaclaw)
 
 ```bash
 # One-time migration
-openclaw-memory import-all ~/clawd --user-id han
+supaclaw import-all ~/clawd --user-id han
 ```
 
 **Benefits:**
@@ -509,7 +509,7 @@ openclaw-memory import-all ~/clawd --user-id han
 
 **Overall Project: 100/100 steps complete (100%)**
 
-🎉 **OpenClaw Memory v1.0.0 is COMPLETE!**
+🎉 **Supaclaw v1.0.0 is COMPLETE!**
 
 ---
 
@@ -524,11 +524,11 @@ openclaw-memory import-all ~/clawd --user-id han
 
 **Installation:**
 ```bash
-npm install openclaw-memory
+npm install supaclaw
 ```
 
 **Documentation:**
-- https://github.com/Arephan/openclaw-memory
-- https://www.npmjs.com/package/openclaw-memory
+- https://github.com/Arephan/supaclaw
+- https://www.npmjs.com/package/supaclaw
 
 **100/100 steps complete! 🚀**

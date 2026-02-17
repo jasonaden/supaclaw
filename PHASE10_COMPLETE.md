@@ -5,7 +5,7 @@
 
 ## What Was Built
 
-Phase 10 added comprehensive Clawdbot integration, making OpenClaw Memory a drop-in replacement for file-based memory systems (MEMORY.md, TODO.md, etc.).
+Phase 10 added comprehensive Clawdbot integration, making Supaclaw a drop-in replacement for file-based memory systems (MEMORY.md, TODO.md, etc.).
 
 ### Core Files Added
 
@@ -41,7 +41,7 @@ Phase 10 added comprehensive Clawdbot integration, making OpenClaw Memory a drop
 
 ## Features Delivered
 
-### ✅ Step 89: Create openclaw-memory skill
+### ✅ Step 89: Create supaclaw skill
 
 **What it does:**
 - Complete Clawdbot skill package
@@ -53,10 +53,10 @@ Phase 10 added comprehensive Clawdbot integration, making OpenClaw Memory a drop
 **Usage:**
 ```bash
 # Install skill
-clawdhub install openclaw-memory
+clawdhub install supaclaw
 
 # Or use npm globally
-npm install -g openclaw-memory
+npm install -g supaclaw
 ```
 
 ### ✅ Step 90: Auto-inject memory into system prompt
@@ -87,7 +87,7 @@ const systemPrompt = BASE_PROMPT + '\n\n' + context;
 ## Relevant Context
 
 - [preferences] User prefers TypeScript over JavaScript
-- [projects] Working on OpenClaw Memory integration
+- [projects] Working on Supaclaw integration
 - [context] User is actively trading stocks
 
 ## Past Learnings
@@ -327,8 +327,8 @@ class ClawdbotMemoryIntegration {
   // Heartbeat monitoring
   async heartbeat(): Promise<HeartbeatResult>
 
-  // Access underlying OpenClawMemory
-  getMemory(): OpenClawMemory
+  // Access underlying Supaclaw
+  getMemory(): Supaclaw
 }
 ```
 
@@ -472,7 +472,7 @@ npm test -- integration.test.ts
 - Tokens loaded per turn: ~12,500
 - Cost per 1M turns (input): ~$37.50 (at $3/M tokens)
 
-**After (OpenClaw Memory):**
+**After (Supaclaw):**
 - Average memories retrieved: 5
 - Tokens loaded per turn: ~500
 - Cost per 1M turns (input): ~$1.50
@@ -522,7 +522,7 @@ npm test -- integration.test.ts
 
 ```bash
 # One-time migration
-openclaw-memory import-all ~/clawd --user-id han
+supaclaw import-all ~/clawd --user-id han
 ```
 
 **Benefits:**
@@ -545,10 +545,10 @@ Updated files:
 
 ```bash
 # Install via npm
-npm install -g openclaw-memory
+npm install -g supaclaw
 
 # Initialize
-openclaw-memory init
+supaclaw init
 
 # Set environment
 export SUPABASE_URL="..."
@@ -556,19 +556,19 @@ export SUPABASE_KEY="..."
 export OPENAI_API_KEY="..."
 
 # Import existing memories
-openclaw-memory import-all ~/clawd --user-id han
+supaclaw import-all ~/clawd --user-id han
 
 # Test
-openclaw-memory search "user preferences"
-openclaw-memory sessions --limit 10
-openclaw-memory tasks --upcoming 24h
+supaclaw search "user preferences"
+supaclaw sessions --limit 10
+supaclaw tasks --upcoming 24h
 ```
 
 ## Integration Checklist
 
-To integrate OpenClaw Memory with your Clawdbot:
+To integrate Supaclaw with your Clawdbot:
 
-- [x] Install openclaw-memory package
+- [x] Install supaclaw package
 - [x] Set up Supabase database
 - [x] Configure environment variables
 - [x] Import existing memories
@@ -627,7 +627,7 @@ To integrate OpenClaw Memory with your Clawdbot:
 **Phase 10: 100% Complete (7/7 steps)**
 
 ✅ Completed:
-- Create openclaw-memory skill
+- Create supaclaw skill
 - Auto-inject memory into system prompt
 - Replace memory_search tool
 - Replace memory_get tool

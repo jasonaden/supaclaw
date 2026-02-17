@@ -5,7 +5,7 @@
 
 ## What Was Built
 
-Phase 9 added comprehensive import capabilities to migrate from traditional file-based memory systems (like Clawdbot's MEMORY.md, TODO.md, etc.) into the OpenClaw Memory database.
+Phase 9 added comprehensive import capabilities to migrate from traditional file-based memory systems (like Clawdbot's MEMORY.md, TODO.md, etc.) into the Supaclaw database.
 
 ### Core Files Added
 
@@ -47,7 +47,7 @@ Phase 9 added comprehensive import capabilities to migrate from traditional file
 
 ## Projects
 
-Working on OpenClaw Memory. Building AI agents with persistent memory.
+Working on Supaclaw. Building AI agents with persistent memory.
 ```
 
 Imported as 3 memories:
@@ -129,7 +129,7 @@ Creates 2 learnings with proper categorization
 ### ✅ Step 87: Export to markdown (full backup)
 
 Already existed from Phase 2:
-- `openclaw-memory export <path>`
+- `supaclaw export <path>`
 - Exports all memories grouped by category
 - Includes importance, dates, metadata
 
@@ -149,13 +149,13 @@ Already existed from Phase 2:
 
 ```bash
 # Import individual files
-npx openclaw-memory import-memory-md ~/clawd/MEMORY.md
-npx openclaw-memory import-daily-logs ~/clawd/memory --user-id han
-npx openclaw-memory import-todo-md ~/clawd/TODO.md
-npx openclaw-memory import-learnings-md ~/clawd/LEARNINGS.md
+npx supaclaw import-memory-md ~/clawd/MEMORY.md
+npx supaclaw import-daily-logs ~/clawd/memory --user-id han
+npx supaclaw import-todo-md ~/clawd/TODO.md
+npx supaclaw import-learnings-md ~/clawd/LEARNINGS.md
 
 # Import everything at once
-npx openclaw-memory import-all ~/clawd --user-id han
+npx supaclaw import-all ~/clawd --user-id han
 ```
 
 ## Tag Reference
@@ -215,14 +215,14 @@ Updated:
     ...
 ```
 
-**After (OpenClaw Memory):**
+**After (Supaclaw):**
 ```bash
 # One-time migration
-npx openclaw-memory import-all ~/clawd --user-id han
+npx supaclaw import-all ~/clawd --user-id han
 
 # Now query what you need, when you need it
-npx openclaw-memory search "TypeScript preferences"
-npx openclaw-memory sessions --limit 10
+npx supaclaw search "TypeScript preferences"
+npx supaclaw sessions --limit 10
 ```
 
 **Benefits:**
@@ -235,7 +235,7 @@ npx openclaw-memory sessions --limit 10
 ## What's Next
 
 **Phase 10: Clawdbot Integration (Steps 89-95)**
-- Create openclaw-memory skill
+- Create supaclaw skill
 - Auto-inject memory into system prompt
 - Replace memory_search tool
 - Auto-log all messages

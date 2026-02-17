@@ -6,7 +6,7 @@ import { join } from 'path';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createInterface } from 'readline';
 
-const CONFIG_FILE = '.openclaw-memory.json';
+const CONFIG_FILE = '.supaclaw.json';
 
 interface Config {
   supabaseUrl: string;
@@ -56,7 +56,7 @@ function getSupabaseClient(config: Config): SupabaseClient {
 // ============ COMMANDS ============
 
 async function cmdInit(): Promise<void> {
-  console.log('🚀 OpenClaw Memory - Setup\n');
+  console.log('🚀 Supaclaw - Setup\n');
 
   // Check if config already exists
   if (existsSync(join(process.cwd(), CONFIG_FILE))) {
@@ -96,15 +96,15 @@ async function cmdInit(): Promise<void> {
 
   console.log('\n✅ Configuration saved!');
   console.log('\nNext steps:');
-  console.log('  1. Run migrations: npx openclaw-memory migrate');
-  console.log('  2. Test connection: npx openclaw-memory test');
-  console.log('  3. Check status:    npx openclaw-memory status');
+  console.log('  1. Run migrations: npx supaclaw migrate');
+  console.log('  2. Test connection: npx supaclaw test');
+  console.log('  3. Check status:    npx supaclaw status');
 }
 
 async function cmdMigrate(): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
@@ -133,14 +133,14 @@ async function cmdMigrate(): Promise<void> {
   console.log('─'.repeat(60));
 
   console.log('\n✅ After running the migration, verify with:');
-  console.log('   npx openclaw-memory test');
-  console.log('   npx openclaw-memory status');
+  console.log('   npx supaclaw test');
+  console.log('   npx supaclaw status');
 }
 
 async function cmdTest(): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
@@ -158,7 +158,7 @@ async function cmdTest(): Promise<void> {
     if (sessionsError) {
       if (sessionsError.code === '42P01') {
         console.error('❌ Tables not found. Run migrations first:');
-        console.error('   npx openclaw-memory migrate');
+        console.error('   npx supaclaw migrate');
       } else {
         console.error('❌ Connection failed:', sessionsError.message);
       }
@@ -189,7 +189,7 @@ async function cmdTest(): Promise<void> {
 
     if (!allTablesExist) {
       console.log('\n⚠️  Some tables are missing. Run migrations:');
-      console.log('   npx openclaw-memory migrate');
+      console.log('   npx supaclaw migrate');
       process.exit(1);
     }
 
@@ -203,11 +203,11 @@ async function cmdTest(): Promise<void> {
 async function cmdStatus(): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
-  console.log('📊 OpenClaw Memory - Status\n');
+  console.log('📊 Supaclaw - Status\n');
 
   const supabase = getSupabaseClient(config);
 
@@ -277,7 +277,7 @@ async function cmdSearch(query: string, options: {
 }): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
@@ -399,7 +399,7 @@ async function cmdSearch(query: string, options: {
 async function cmdSessions(options: { limit?: number; active?: boolean }): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
@@ -458,7 +458,7 @@ async function cmdSessions(options: { limit?: number; active?: boolean }): Promi
 async function cmdExport(outputPath: string): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
@@ -485,7 +485,7 @@ async function cmdExport(outputPath: string): Promise<void> {
     }
 
     // Build markdown
-    let markdown = `# OpenClaw Memory Export\n\n`;
+    let markdown = `# Supaclaw Export\n\n`;
     markdown += `**Agent:** ${config.agentId}\n`;
     markdown += `**Exported:** ${new Date().toISOString()}\n`;
     markdown += `**Total Memories:** ${data.length}\n\n`;
@@ -514,7 +514,7 @@ async function cmdExport(outputPath: string): Promise<void> {
     }
 
     // Write to file
-    const resolvedPath = outputPath || 'openclaw-memory-export.md';
+    const resolvedPath = outputPath || 'supaclaw-export.md';
     writeFileSync(resolvedPath, markdown, 'utf-8');
 
     console.log(`✅ Exported ${data.length} memories to: ${resolvedPath}`);
@@ -528,7 +528,7 @@ async function cmdExport(outputPath: string): Promise<void> {
 async function cmdImport(inputPath: string): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
@@ -617,13 +617,13 @@ async function cmdDecay(options: {
 }): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
   try {
-    const { OpenClawMemory } = await import('./index');
-    const memory = new OpenClawMemory({
+    const { Supaclaw } = await import('./index');
+    const memory = new Supaclaw({
       supabaseUrl: config.supabaseUrl,
       supabaseKey: config.supabaseKey,
       agentId: config.agentId
@@ -648,13 +648,13 @@ async function cmdConsolidate(options: {
 }): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
   try {
-    const { OpenClawMemory } = await import('./index');
-    const memory = new OpenClawMemory({
+    const { Supaclaw } = await import('./index');
+    const memory = new Supaclaw({
       supabaseUrl: config.supabaseUrl,
       supabaseKey: config.supabaseKey,
       agentId: config.agentId
@@ -675,13 +675,13 @@ async function cmdConsolidate(options: {
 async function cmdTag(memoryId: string, tags: string[]): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
   try {
-    const { OpenClawMemory } = await import('./index');
-    const memory = new OpenClawMemory({
+    const { Supaclaw } = await import('./index');
+    const memory = new Supaclaw({
       supabaseUrl: config.supabaseUrl,
       supabaseKey: config.supabaseKey,
       agentId: config.agentId
@@ -701,13 +701,13 @@ async function cmdTag(memoryId: string, tags: string[]): Promise<void> {
 async function cmdUntag(memoryId: string, tags: string[]): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
   try {
-    const { OpenClawMemory } = await import('./index');
-    const memory = new OpenClawMemory({
+    const { Supaclaw } = await import('./index');
+    const memory = new Supaclaw({
       supabaseUrl: config.supabaseUrl,
       supabaseKey: config.supabaseKey,
       agentId: config.agentId
@@ -730,13 +730,13 @@ async function cmdSearchTags(tags: string[], options: {
 }): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
   try {
-    const { OpenClawMemory } = await import('./index');
-    const memory = new OpenClawMemory({
+    const { Supaclaw } = await import('./index');
+    const memory = new Supaclaw({
       supabaseUrl: config.supabaseUrl,
       supabaseKey: config.supabaseKey,
       agentId: config.agentId
@@ -771,13 +771,13 @@ async function cmdCleanup(options: {
 }): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
   try {
-    const { OpenClawMemory } = await import('./index');
-    const memory = new OpenClawMemory({
+    const { Supaclaw } = await import('./index');
+    const memory = new Supaclaw({
       supabaseUrl: config.supabaseUrl,
       supabaseKey: config.supabaseKey,
       agentId: config.agentId
@@ -799,13 +799,13 @@ async function cmdCleanup(options: {
 async function cmdCleanupStats(): Promise<void> {
   const config = loadConfig();
   if (!config) {
-    console.error('❌ No config found. Run `openclaw-memory init` first.');
+    console.error('❌ No config found. Run `supaclaw init` first.');
     process.exit(1);
   }
 
   try {
-    const { OpenClawMemory } = await import('./index');
-    const memory = new OpenClawMemory({
+    const { Supaclaw } = await import('./index');
+    const memory = new Supaclaw({
       supabaseUrl: config.supabaseUrl,
       supabaseKey: config.supabaseKey,
       agentId: config.agentId
@@ -833,13 +833,13 @@ async function cmdCleanupStats(): Promise<void> {
 const program = new Command();
 
 program
-  .name('openclaw-memory')
+  .name('supaclaw')
   .description('Persistent memory for AI agents using Supabase')
   .version('0.1.0');
 
 program
   .command('init')
-  .description('Initialize configuration (creates .openclaw-memory.json)')
+  .description('Initialize configuration (creates .supaclaw.json)')
   .action(cmdInit);
 
 program
@@ -888,7 +888,7 @@ program
   .command('export [path]')
   .description('Export memories to markdown file')
   .action((path) => {
-    cmdExport(path || 'openclaw-memory-export.md');
+    cmdExport(path || 'supaclaw-export.md');
   });
 
 program
@@ -973,13 +973,13 @@ program
   .action(async (options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1023,13 +1023,13 @@ program
   .action(async (entityId, options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1095,13 +1095,13 @@ program
   .action(async () => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1132,7 +1132,7 @@ program
   .action(async (text, options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
@@ -1143,8 +1143,8 @@ program
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId,
@@ -1193,13 +1193,13 @@ program
   .action(async (taskId) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1232,13 +1232,13 @@ program
   .action(async (taskId, dependsOnTaskId) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1260,13 +1260,13 @@ program
   .action(async (options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1301,7 +1301,7 @@ program
   .action(async (name, options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
@@ -1323,8 +1323,8 @@ program
       const fs = await import('fs/promises');
       const templateData = JSON.parse(await fs.readFile(options.file, 'utf-8'));
 
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1345,13 +1345,13 @@ program
   .action(async () => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1383,13 +1383,13 @@ program
   .action(async (templateId, options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1421,13 +1421,13 @@ program
   .action(async (options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1458,13 +1458,13 @@ program
   .action(async () => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1508,13 +1508,13 @@ program
   .action(async (context, options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1553,7 +1553,7 @@ program
   .action(async (learningId, options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
@@ -1564,8 +1564,8 @@ program
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId,
@@ -1603,13 +1603,13 @@ program
   .action(async (options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1642,13 +1642,13 @@ program
   .action(async (options) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
     try {
-      const { OpenClawMemory } = await import('./index');
-      const memory = new OpenClawMemory({
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1679,7 +1679,7 @@ program
   .action(async (memoryPath: string) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
@@ -1687,12 +1687,12 @@ program
       console.log(`📥 Importing MEMORY.md from: ${memoryPath}\n`);
 
       const { parseMemoryMd } = await import('./parsers');
-      const { OpenClawMemory } = await import('./index');
+      const { Supaclaw } = await import('./index');
 
       const memories = parseMemoryMd(memoryPath);
       console.log(`Found ${memories.length} memories to import\n`);
 
-      const memory = new OpenClawMemory({
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1728,7 +1728,7 @@ program
   .action(async (directory: string, options: { userId: string }) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
@@ -1736,12 +1736,12 @@ program
       console.log(`📥 Importing daily logs from: ${directory}\n`);
 
       const { parseAllDailyLogs } = await import('./parsers');
-      const { OpenClawMemory } = await import('./index');
+      const { Supaclaw } = await import('./index');
 
       const sessions = parseAllDailyLogs(directory, options.userId);
       console.log(`Found ${sessions.length} sessions to import\n`);
 
-      const memory = new OpenClawMemory({
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1786,7 +1786,7 @@ program
   .action(async (todoPath: string) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
@@ -1794,12 +1794,12 @@ program
       console.log(`📥 Importing TODO.md from: ${todoPath}\n`);
 
       const { parseTodoMd } = await import('./parsers');
-      const { OpenClawMemory } = await import('./index');
+      const { Supaclaw } = await import('./index');
 
       const tasks = parseTodoMd(todoPath);
       console.log(`Found ${tasks.length} tasks to import\n`);
 
-      const memory = new OpenClawMemory({
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1835,7 +1835,7 @@ program
   .action(async (learningsPath: string) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
@@ -1843,12 +1843,12 @@ program
       console.log(`📥 Importing LEARNINGS.md from: ${learningsPath}\n`);
 
       const { parseLearningsMd } = await import('./parsers');
-      const { OpenClawMemory } = await import('./index');
+      const { Supaclaw } = await import('./index');
 
       const learnings = parseLearningsMd(learningsPath);
       console.log(`Found ${learnings.length} learnings to import\n`);
 
-      const memory = new OpenClawMemory({
+      const memory = new Supaclaw({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
         agentId: config.agentId
@@ -1893,7 +1893,7 @@ program
   .action(async (workspace: string, options: { userId: string }) => {
     const config = loadConfig();
     if (!config) {
-      console.error('❌ No config found. Run `openclaw-memory init` first.');
+      console.error('❌ No config found. Run `supaclaw init` first.');
       process.exit(1);
     }
 
@@ -1914,10 +1914,10 @@ program
       try {
         console.log('📄 Importing MEMORY.md...');
         const { parseMemoryMd } = await import('./parsers');
-        const { OpenClawMemory } = await import('./index');
+        const { Supaclaw } = await import('./index');
 
         const memories = parseMemoryMd(memoryMdPath);
-        const memory = new OpenClawMemory({
+        const memory = new Supaclaw({
           supabaseUrl: config.supabaseUrl,
           supabaseKey: config.supabaseKey,
           agentId: config.agentId
@@ -1947,10 +1947,10 @@ program
       try {
         console.log('📅 Importing daily logs...');
         const { parseAllDailyLogs } = await import('./parsers');
-        const { OpenClawMemory } = await import('./index');
+        const { Supaclaw } = await import('./index');
 
         const sessions = parseAllDailyLogs(dailyLogsDir, options.userId);
-        const memory = new OpenClawMemory({
+        const memory = new Supaclaw({
           supabaseUrl: config.supabaseUrl,
           supabaseKey: config.supabaseKey,
           agentId: config.agentId
@@ -1989,10 +1989,10 @@ program
       try {
         console.log('✅ Importing TODO.md...');
         const { parseTodoMd } = await import('./parsers');
-        const { OpenClawMemory } = await import('./index');
+        const { Supaclaw } = await import('./index');
 
         const tasks = parseTodoMd(todoMdPath);
-        const memory = new OpenClawMemory({
+        const memory = new Supaclaw({
           supabaseUrl: config.supabaseUrl,
           supabaseKey: config.supabaseKey,
           agentId: config.agentId
@@ -2023,10 +2023,10 @@ program
       try {
         console.log('🧠 Importing LEARNINGS.md...');
         const { parseLearningsMd } = await import('./parsers');
-        const { OpenClawMemory } = await import('./index');
+        const { Supaclaw } = await import('./index');
 
         const learnings = parseLearningsMd(learningsMdPath);
-        const memory = new OpenClawMemory({
+        const memory = new Supaclaw({
           supabaseUrl: config.supabaseUrl,
           supabaseKey: config.supabaseKey,
           agentId: config.agentId

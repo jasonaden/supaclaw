@@ -11,7 +11,7 @@ import {
   getBudgetForModel
 } from './context-manager';
 
-export interface OpenClawMemoryConfig {
+export interface SupaclawConfig {
   supabaseUrl: string;
   supabaseKey: string;
   agentId: string;
@@ -114,13 +114,13 @@ export interface EntityRelationship {
   metadata: Record<string, unknown>;
 }
 
-export class OpenClawMemory {
+export class Supaclaw {
   private supabase: SupabaseClient;
   private agentId: string;
-  private config: OpenClawMemoryConfig;
+  private config: SupaclawConfig;
   private openai?: OpenAI;
 
-  constructor(config: OpenClawMemoryConfig) {
+  constructor(config: SupaclawConfig) {
     this.supabase = createClient(config.supabaseUrl, config.supabaseKey);
     this.agentId = config.agentId;
     this.config = config;
@@ -198,7 +198,7 @@ export class OpenClawMemory {
     
     if (error && error.code === '42P01') {
       throw new Error(
-        'Tables not found. Run migrations first: npx openclaw-memory migrate'
+        'Tables not found. Run migrations first: npx supaclaw migrate'
       );
     }
   }
@@ -2968,7 +2968,7 @@ export {
 
 // Export error handling utilities
 export {
-  OpenClawError,
+  SupaclawError,
   DatabaseError,
   EmbeddingError,
   ValidationError,
@@ -2985,4 +2985,4 @@ export {
   batchWithErrorHandling
 } from './error-handling';
 
-export default OpenClawMemory;
+export default Supaclaw;

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import OpenClawMemory from '../src/index';
+import Supaclaw from '../src/index';
 
 // Mock Supabase client for testing
-const mockMemory = new OpenClawMemory({
+const mockMemory = new Supaclaw({
   supabaseUrl: process.env.SUPABASE_URL || 'http://localhost:54321',
   supabaseKey: process.env.SUPABASE_KEY || 'test-key',
   agentId: 'test-relationships',

@@ -73,28 +73,28 @@ Comprehensive reporting:
 
 ```bash
 # Task Dependencies
-openclaw-memory task-deps <taskId>
-openclaw-memory task-add-dep <taskId> <dependsOnTaskId>
-openclaw-memory task-ready [--user <userId>]
+supaclaw task-deps <taskId>
+supaclaw task-add-dep <taskId> <dependsOnTaskId>
+supaclaw task-ready [--user <userId>]
 
 # Task Templates
-openclaw-memory task-template <name> --file <path>
-openclaw-memory task-templates
-openclaw-memory task-apply-template <templateId> [--user <userId>] [--start <date>]
+supaclaw task-template <name> --file <path>
+supaclaw task-templates
+supaclaw task-apply-template <templateId> [--user <userId>] [--start <date>]
 
 # Task Reminders
-openclaw-memory task-reminders [--user <userId>] [--hours <hours>]
+supaclaw task-reminders [--user <userId>] [--hours <hours>]
 
 # Learning Patterns
-openclaw-memory learning-patterns
-openclaw-memory learning-recommend <context> [--limit <number>]
+supaclaw learning-patterns
+supaclaw learning-recommend <context> [--limit <number>]
 
 # Learning Similarity
-openclaw-memory learning-similar <learningId> [--openai-key <key>] [--limit <number>]
+supaclaw learning-similar <learningId> [--openai-key <key>] [--limit <number>]
 
 # Learning Export
-openclaw-memory learning-export [--category <cat>] [--severity <sev>] [--output <path>]
-openclaw-memory learning-export-json [--category <cat>] [--output <path>]
+supaclaw learning-export [--category <cat>] [--severity <sev>] [--output <path>]
+supaclaw learning-export-json [--category <cat>] [--output <path>]
 ```
 
 ---
@@ -223,7 +223,7 @@ console.log(`Patterns:`, data.patterns);
 ## What's Next
 
 ### Phase 9: Migration & Import (Steps 81-88)
-Parse existing markdown files into OpenClaw Memory:
+Parse existing markdown files into Supaclaw:
 - MEMORY.md → memories table
 - memory/*.md → sessions + messages
 - TODO.md → tasks table

@@ -1,5 +1,5 @@
 /**
- * Clawdbot Integration for OpenClaw Memory
+ * Clawdbot Integration for Supaclaw
  * 
  * This module provides integration hooks for Clawdbot to:
  * 1. Auto-log all messages to sessions
@@ -9,7 +9,7 @@
  * 5. Handle session lifecycle
  */
 
-import { OpenClawMemory, Memory, Learning, Task } from './index';
+import { Supaclaw, Memory, Learning, Task } from './index';
 
 export interface ClawdbotConfig {
   supabaseUrl: string;
@@ -33,14 +33,14 @@ export interface MessageContext {
 }
 
 export class ClawdbotMemoryIntegration {
-  private memory: OpenClawMemory;
+  private memory: Supaclaw;
   private config: ClawdbotConfig;
   private activeSessions: Map<string, { sessionId: string; lastActivity: number }>;
   private sessionTimeoutMs: number;
 
   constructor(config: ClawdbotConfig) {
     this.config = config;
-    this.memory = new OpenClawMemory({
+    this.memory = new Supaclaw({
       supabaseUrl: config.supabaseUrl,
       supabaseKey: config.supabaseKey,
       agentId: config.agentId,
@@ -425,9 +425,9 @@ export class ClawdbotMemoryIntegration {
   }
 
   /**
-   * Get the underlying OpenClawMemory instance for advanced operations
+   * Get the underlying Supaclaw instance for advanced operations
    */
-  getMemory(): OpenClawMemory {
+  getMemory(): Supaclaw {
     return this.memory;
   }
 }

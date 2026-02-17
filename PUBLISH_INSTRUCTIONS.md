@@ -1,4 +1,4 @@
-# 📦 OpenClaw Memory v1.0.0 - Ready to Publish!
+# 📦 Supaclaw v1.0.0 - Ready to Publish!
 
 ## ✅ What's Complete
 
@@ -12,11 +12,11 @@
 ## ✅ GitHub Release Complete
 
 **Tag:** v1.0.0  
-**Pushed to:** https://github.com/Arephan/openclaw-memory  
+**Pushed to:** https://github.com/Arephan/supaclaw  
 **Status:** ✅ LIVE
 
 You can create the GitHub release page at:
-https://github.com/Arephan/openclaw-memory/releases/new?tag=v1.0.0
+https://github.com/Arephan/supaclaw/releases/new?tag=v1.0.0
 
 ## 📦 NPM Publish - Needs Your 2FA Code
 
@@ -25,7 +25,7 @@ The package is **READY** to publish but requires a one-time password from your a
 ### To Complete NPM Publish:
 
 ```bash
-cd /Users/hankim/clawd/openclaw-memory
+cd /Users/hankim/clawd/supaclaw
 
 # Get your 2FA code from authenticator app
 # Then run:
@@ -34,7 +34,7 @@ npm publish --otp=YOUR_6_DIGIT_CODE
 
 ### What Will Be Published:
 
-**Package:** `openclaw-memory@1.0.0`  
+**Package:** `supaclaw@1.0.0`  
 **Size:** 58.4 KB (compressed), 287 KB (unpacked)  
 **Registry:** https://registry.npmjs.org/
 
@@ -47,9 +47,9 @@ npm publish --otp=YOUR_6_DIGIT_CODE
 ### After Publishing:
 
 The package will be available at:
-- **NPM:** https://www.npmjs.com/package/openclaw-memory
-- **Install:** `npm install openclaw-memory`
-- **CLI:** `npm install -g openclaw-memory`
+- **NPM:** https://www.npmjs.com/package/supaclaw
+- **Install:** `npm install supaclaw`
+- **CLI:** `npm install -g supaclaw`
 
 ## 🎉 Project Status
 
@@ -102,7 +102,7 @@ All development work is DONE. Only the npm publish 2FA step remains.
 ## 🔄 Quick Publish Command
 
 ```bash
-cd /Users/hankim/clawd/openclaw-memory
+cd /Users/hankim/clawd/supaclaw
 npm publish --otp=$(pbpaste)  # Paste 2FA code first, then run
 ```
 

@@ -33,9 +33,9 @@ npm install supaclaw
 ```
 
 ```typescript
-import { OpenClawMemory } from 'supaclaw';
+import { Supaclaw } from 'supaclaw';
 
-const memory = new OpenClawMemory({
+const memory = new Supaclaw({
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseKey: process.env.SUPABASE_KEY,
   agentId: 'my-agent',
@@ -275,7 +275,7 @@ const budget = createAdaptiveBudget({
 
 ### Lost-in-Middle Mitigation
 
-Research shows LLMs pay less attention to content in the middle of long contexts. OpenClaw automatically places high-importance items at the beginning and end:
+Research shows LLMs pay less attention to content in the middle of long contexts. Supaclaw automatically places high-importance items at the beginning and end:
 
 ```typescript
 const result = await memory.buildOptimizedContext({
@@ -548,7 +548,7 @@ npx supaclaw import-all ~/clawd --user-id han
 
 ## API Reference
 
-### `new OpenClawMemory(config)`
+### `new Supaclaw(config)`
 Create a memory instance.
 
 **Config options:**
@@ -817,7 +817,7 @@ Get cleanup statistics for monitoring.
 
 **Returns:** `{ totalSessions, archivedSessions, oldSessions, totalMessages, orphanedMessages }`
 
-## Integration with OpenClaw/Clawdbot
+## Integration with Supaclaw/Clawdbot
 
 This package is designed to integrate with [Clawdbot](https://github.com/clawdbot/clawdbot):
 

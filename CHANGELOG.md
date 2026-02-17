@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to OpenClaw Memory will be documented in this file.
+All notable changes to Supaclaw will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🎉 Initial Release
 
-OpenClaw Memory v1.0.0 is a production-ready persistent memory system for AI agents built on Supabase.
+Supaclaw v1.0.0 is a production-ready persistent memory system for AI agents built on Supabase.
 
 #### Added
 
@@ -35,15 +35,15 @@ OpenClaw Memory v1.0.0 is a production-ready persistent memory system for AI age
 - ✅ ~96% token reduction vs file-based memory
 
 **CLI Tools**
-- ✅ `openclaw-memory init` - Interactive setup wizard
-- ✅ `openclaw-memory migrate` - Run database migrations
-- ✅ `openclaw-memory status` - View stats and health
-- ✅ `openclaw-memory search` - Semantic memory search
-- ✅ `openclaw-memory sessions` - List and filter sessions
-- ✅ `openclaw-memory tasks` - Manage tasks
-- ✅ `openclaw-memory export` - Export to Markdown
-- ✅ `openclaw-memory import` - Import from Markdown
-- ✅ `openclaw-memory import-all` - Bulk import directory
+- ✅ `supaclaw init` - Interactive setup wizard
+- ✅ `supaclaw migrate` - Run database migrations
+- ✅ `supaclaw status` - View stats and health
+- ✅ `supaclaw search` - Semantic memory search
+- ✅ `supaclaw sessions` - List and filter sessions
+- ✅ `supaclaw tasks` - Manage tasks
+- ✅ `supaclaw export` - Export to Markdown
+- ✅ `supaclaw import` - Import from Markdown
+- ✅ `supaclaw import-all` - Bulk import directory
 
 **Clawdbot Integration**
 - ✅ Drop-in replacement for MEMORY.md/TODO.md
@@ -97,14 +97,14 @@ OpenClaw Memory v1.0.0 is a production-ready persistent memory system for AI age
 ### Package Details
 
 - **License:** MIT
-- **Repository:** https://github.com/Arephan/openclaw-memory
+- **Repository:** https://github.com/Arephan/supaclaw
 - **Author:** Han Kim
 - **Node:** >=18.0.0
 
 ### Install
 
 ```bash
-npm install openclaw-memory
+npm install supaclaw
 ```
 
 ### Dependencies

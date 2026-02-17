@@ -1,6 +1,6 @@
 # Context Window Management Guide
 
-OpenClaw Memory includes advanced context window management features to optimize token usage and improve LLM performance.
+Supaclaw includes advanced context window management features to optimize token usage and improve LLM performance.
 
 ## Features
 
@@ -25,9 +25,9 @@ Research shows LLMs pay more attention to the beginning and end of context windo
 ### Basic Usage
 
 ```typescript
-import OpenClawMemory from 'openclaw-memory';
+import Supaclaw from 'supaclaw';
 
-const memory = new OpenClawMemory({
+const memory = new Supaclaw({
   supabaseUrl: process.env.SUPABASE_URL!,
   supabaseKey: process.env.SUPABASE_KEY!,
   agentId: 'my-agent',
@@ -48,7 +48,7 @@ console.log(context);
 ### Advanced Usage with Custom Budgets
 
 ```typescript
-import { createContextBudget } from 'openclaw-memory';
+import { createContextBudget } from 'supaclaw';
 
 // Create custom budget
 const budget = createContextBudget({
@@ -78,7 +78,7 @@ console.log('Formatted context:', result.formatted);
 The system can automatically adjust budgets based on available content:
 
 ```typescript
-import { createAdaptiveBudget } from 'openclaw-memory';
+import { createAdaptiveBudget } from 'supaclaw';
 
 // Fetch content counts
 const messages = await memory.getMessages(sessionId);
@@ -106,7 +106,7 @@ const result = await memory.buildOptimizedContext({
 Pre-configured budgets for popular models:
 
 ```typescript
-import { getBudgetForModel } from 'openclaw-memory';
+import { getBudgetForModel } from 'supaclaw';
 
 // Get budget for specific model
 const claudeBudget = getBudgetForModel('claude-3.5-sonnet'); // 200k tokens
@@ -166,7 +166,7 @@ const chronological = await memory.buildOptimizedContext({
 Two estimation methods are available:
 
 ```typescript
-import { estimateTokens, estimateTokensAccurate } from 'openclaw-memory';
+import { estimateTokens, estimateTokensAccurate } from 'supaclaw';
 
 const text = "The quick brown fox jumps over the lazy dog";
 
@@ -275,23 +275,23 @@ const context = await memory.buildOptimizedContext({
 The lost-in-middle effect is documented in:
 - "Lost in the Middle: How Language Models Use Long Contexts" (Liu et al., 2023)
 - Shows LLMs perform better with relevant info at start/end vs middle
-- OpenClaw implements automatic mitigation based on importance scores
+- Supaclaw implements automatic mitigation based on importance scores
 
 ## CLI Examples
 
 ```bash
 # Show context window for a query
-npx openclaw-memory context "What did we discuss?" \
+npx supaclaw context "What did we discuss?" \
   --session session-123 \
   --model claude-3.5-sonnet
 
 # Compare context windows across models
-npx openclaw-memory test-budgets "Project status" \
+npx supaclaw test-budgets "Project status" \
   --session session-123 \
   --models gpt-3.5-turbo,gpt-4-turbo,claude-3.5-sonnet
 
 # Estimate session token usage
-npx openclaw-memory estimate-tokens --session session-123
+npx supaclaw estimate-tokens --session session-123
 ```
 
 ## API Reference

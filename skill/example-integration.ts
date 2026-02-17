@@ -1,7 +1,7 @@
 /**
  * Example Clawdbot Integration
  * 
- * This shows how to integrate OpenClaw Memory with Clawdbot
+ * This shows how to integrate Supaclaw with Clawdbot
  */
 
 import { createClawdbotIntegration, createLoggingMiddleware } from '../src/clawdbot-integration';

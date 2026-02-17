@@ -1,7 +1,7 @@
 /**
  * Phase 9: Migration & Import Parsers
  * 
- * Parsers for converting Clawdbot memory files to OpenClaw Memory database format:
+ * Parsers for converting Clawdbot memory files to Supaclaw database format:
  * - MEMORY.md → memories table
  * - memory/*.md → sessions + messages
  * - TODO.md → tasks table

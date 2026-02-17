@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { OpenClawMemory } from '../src/index';
+import { Supaclaw } from '../src/index';
 import type { Memory } from '../src/index';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
@@ -9,11 +9,11 @@ const TEST_AGENT_ID = `test-agent-${Date.now()}`;
 const shouldSkip = !SUPABASE_URL || !SUPABASE_KEY;
 
 describe.skipIf(shouldSkip)('Memory Management', () => {
-  let memory: OpenClawMemory;
+  let memory: Supaclaw;
   let createdMemoryIds: string[] = [];
 
   beforeAll(async () => {
-    memory = new OpenClawMemory({
+    memory = new Supaclaw({
       supabaseUrl: SUPABASE_URL,
       supabaseKey: SUPABASE_KEY,
       agentId: TEST_AGENT_ID

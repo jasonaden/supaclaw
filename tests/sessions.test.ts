@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { OpenClawMemory } from '../src/index';
+import { Supaclaw } from '../src/index';
 import type { Session } from '../src/index';
 
 // These tests require a real Supabase instance
@@ -11,11 +11,11 @@ const TEST_AGENT_ID = `test-agent-${Date.now()}`;
 const shouldSkip = !SUPABASE_URL || !SUPABASE_KEY;
 
 describe.skipIf(shouldSkip)('Session Management', () => {
-  let memory: OpenClawMemory;
+  let memory: Supaclaw;
   let createdSessionIds: string[] = [];
 
   beforeAll(async () => {
-    memory = new OpenClawMemory({
+    memory = new Supaclaw({
       supabaseUrl: SUPABASE_URL,
       supabaseKey: SUPABASE_KEY,
       agentId: TEST_AGENT_ID

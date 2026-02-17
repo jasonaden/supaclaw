@@ -3,7 +3,7 @@
  * Demonstrates token budgeting, smart context selection, and lost-in-middle mitigation
  */
 
-import OpenClawMemory, {
+import Supaclaw, {
   createContextBudget,
   createAdaptiveBudget,
   getBudgetForModel,
@@ -12,8 +12,8 @@ import OpenClawMemory, {
 } from '../src/index';
 
 async function main() {
-  // Initialize OpenClaw Memory
-  const memory = new OpenClawMemory({
+  // Initialize Supaclaw
+  const memory = new Supaclaw({
     supabaseUrl: process.env.SUPABASE_URL!,
     supabaseKey: process.env.SUPABASE_KEY!,
     agentId: 'demo-agent',
@@ -21,7 +21,7 @@ async function main() {
     openaiApiKey: process.env.OPENAI_API_KEY
   });
 
-  console.log('=== OpenClaw Memory: Context Window Examples ===\n');
+  console.log('=== Supaclaw: Context Window Examples ===\n');
 
   // Example 1: Simple smart context
   console.log('Example 1: Get Smart Context');
