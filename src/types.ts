@@ -104,6 +104,15 @@ export interface EntityRelationship {
   metadata: Record<string, unknown>;
 }
 
+/** Item within a task template's tasks array */
+export interface TaskTemplateItem {
+  title: string;
+  description?: string;
+  priority?: number;
+  estimatedDuration?: string;
+  dependencies?: number[];
+}
+
 /** Dependency injection container for domain managers */
 export interface SupaclawDeps {
   supabase: SupabaseClient;

@@ -31,8 +31,9 @@ export class EntityManager {
       }
 
       const model = this.config.embeddingModel || 'text-embedding-3-small';
+      const openai = this.openai; // already guarded above
       return wrapEmbeddingOperation(async () => {
-        const response = await this.openai!.embeddings.create({
+        const response = await openai.embeddings.create({
           model,
           input: text,
         });

@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { wrapDatabaseOperation } from './error-handling';
-import type { SupaclawDeps, SupaclawConfig, Task } from './types';
+import type { SupaclawDeps, SupaclawConfig, Task, TaskTemplateItem } from './types';
 
 export class TaskManager {
   private supabase: SupabaseClient;
@@ -370,7 +370,7 @@ export class TaskManager {
       id: task.id,
       name: task.title.replace('[TEMPLATE] ', ''),
       description: task.description,
-      tasks: ((task.metadata?.template_data as Record<string, unknown> | undefined)?.['tasks'] as { title: string; description?: string; priority?: number; estimatedDuration?: string; dependencies?: number[]; }[]) || []
+      tasks: ((task.metadata?.template_data as Record<string, unknown> | undefined)?.['tasks'] as TaskTemplateItem[]) || []
     }));
   }
 
@@ -395,7 +395,7 @@ export class TaskManager {
       throw new Error('Invalid template data');
     }
 
-    const tasksList = templateData['tasks'] as { title: string; description?: string; priority?: number; estimatedDuration?: string; dependencies?: number[]; }[];
+    const tasksList = templateData['tasks'] as TaskTemplateItem[];
 
     const createdTasks: Task[] = [];
     const taskIdMap = new Map<number, string>(); // template index -> created task id

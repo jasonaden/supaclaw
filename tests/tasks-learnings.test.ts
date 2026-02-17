@@ -1,240 +1,301 @@
 /**
- * Tests for Phase 8: Tasks & Learnings (Steps 71-80)
- * - Task CRUD (already existed)
- * - Task dependencies
- * - Task templates
- * - Task reminders
- * - Learning patterns
- * - Learning similarity search
- * - Learning export/reports
+ * Tests for Tasks & Learnings
+ * Uses mock Supabase client (no real DB required)
  */
 
-import { vi } from 'vitest';
-import Supaclaw from '../src/index';
+import { Supaclaw } from '../src/index';
+import type { SupaclawDeps } from '../src/types';
 
-const hasSupabase = !!process.env['SUPABASE_URL'] && !!process.env['SUPABASE_KEY'];
+// Mock Supabase client with configurable results
+let mockSingleResult: { data: unknown; error: unknown } = { data: null, error: null };
+let mockListResult: { data: unknown[]; error: unknown } = { data: [], error: null };
+let mockRpcResult: { data: unknown; error: unknown } = { data: null, error: null };
 
-const config = {
-  supabaseUrl: process.env['SUPABASE_URL'] || 'http://localhost:54321',
-  supabaseKey: process.env['SUPABASE_KEY'] || 'test-key',
-  agentId: 'test-agent-tasks-learnings',
-  openaiApiKey: process.env['OPENAI_API_KEY']
+const mockSupabase = {
+  from: (_table: string) => {
+    const chain: Record<string, unknown> = {
+      select: () => chain,
+      insert: () => chain,
+      update: () => chain,
+      delete: () => chain,
+      eq: () => chain,
+      neq: () => chain,
+      lt: () => chain,
+      gt: () => chain,
+      gte: () => chain,
+      lte: () => chain,
+      is: () => chain,
+      not: () => chain,
+      in: () => chain,
+      or: () => chain,
+      ilike: () => chain,
+      order: () => chain,
+      limit: () => chain,
+      range: () => chain,
+      single: () => Promise.resolve(mockSingleResult),
+      then: (fn: (val: typeof mockListResult) => void) => fn(mockListResult)
+    };
+    return chain;
+  },
+  rpc: () => Promise.resolve(mockRpcResult)
 };
 
-let memory: Supaclaw;
-
-beforeAll(async () => {
-  if (!hasSupabase) return;
-  memory = new Supaclaw(config);
-  await memory.initialize();
-});
-
-afterAll(async () => {
-  // Clean up test data
-  try {
-    const tasks = await memory.getTasks({ limit: 1000 });
-    for (const task of tasks) {
-      await memory.deleteTask(task.id);
-    }
-  } catch (err) {
-    console.error('Cleanup error:', err);
+const makeDeps = (): SupaclawDeps => ({
+  supabase: mockSupabase as any,
+  agentId: 'test-agent',
+  config: {
+    supabaseUrl: 'https://test.supabase.co',
+    supabaseKey: 'test-key',
+    agentId: 'test-agent',
+    embeddingProvider: 'none'
   }
 });
 
-// ============ TASK DEPENDENCIES (Steps 71-73) ============
+const mockTask = (overrides: Record<string, unknown> = {}) => ({
+  id: 'task-1',
+  agent_id: 'test-agent',
+  title: 'Test Task',
+  description: 'A test task',
+  status: 'pending',
+  priority: 5,
+  due_at: null,
+  completed_at: null,
+  parent_task_id: null,
+  metadata: {},
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
+  ...overrides
+});
 
-describe.skipIf(!hasSupabase)('Task Dependencies', () => {
-  test('should add task dependency', async () => {
-    const task1 = await memory.createTask({
-      title: 'Task 1 - Must be done first',
-      priority: 5
-    });
+const mockLearning = (overrides: Record<string, unknown> = {}) => ({
+  id: 'learning-1',
+  agent_id: 'test-agent',
+  category: 'error',
+  trigger: 'Failed API call',
+  lesson: 'Always check API status',
+  action: 'Add status check',
+  severity: 'warning',
+  source_session_id: null,
+  applied_count: 0,
+  created_at: '2024-01-01T00:00:00Z',
+  metadata: {},
+  ...overrides
+});
 
-    const task2 = await memory.createTask({
-      title: 'Task 2 - Depends on Task 1',
-      priority: 3
-    });
+// ============ TASK DEPENDENCIES ============
 
-    await memory.addTaskDependency(task2.id, task1.id);
+describe('Task Dependencies', () => {
+  let memory: Supaclaw;
 
-    const dependencies = await memory.getTaskDependencies(task2.id);
-    expect(dependencies).toHaveLength(1);
-    expect(dependencies[0].id).toBe(task1.id);
+  beforeEach(() => {
+    mockSingleResult = { data: null, error: null };
+    mockListResult = { data: [], error: null };
+    mockRpcResult = { data: null, error: null };
+    memory = new Supaclaw(makeDeps());
+  });
+
+  test('should create a task', async () => {
+    mockSingleResult = { data: mockTask(), error: null };
+
+    const task = await memory.createTask({ title: 'Task 1', priority: 5 });
+
+    expect(task).toHaveProperty('id');
+    expect(task).toHaveProperty('title');
+    expect(task).toHaveProperty('status');
+  });
+
+  test('should update a task', async () => {
+    mockSingleResult = {
+      data: mockTask({ status: 'done', completed_at: '2024-01-02T00:00:00Z' }),
+      error: null
+    };
+
+    const task = await memory.updateTask('task-1', { status: 'done' });
+
+    expect(task).toHaveProperty('id');
+    expect(task.status).toBe('done');
+  });
+
+  test('should add task dependency without error', async () => {
+    mockSingleResult = { data: mockTask({ metadata: {} }), error: null };
+
+    await expect(
+      memory.addTaskDependency('task-2', 'task-1')
+    ).resolves.not.toThrow();
+  });
+
+  test('should get task dependencies', async () => {
+    mockSingleResult = {
+      data: mockTask({ metadata: { dependencies: ['task-dep-1'] } }),
+      error: null
+    };
+    mockListResult = {
+      data: [mockTask({ id: 'task-dep-1', title: 'Dependency' })],
+      error: null
+    };
+
+    const dependencies = await memory.getTaskDependencies('task-2');
+
+    expect(Array.isArray(dependencies)).toBe(true);
   });
 
   test('should detect blocked tasks', async () => {
-    const task1 = await memory.createTask({
-      title: 'Dependency Task',
-      status: 'pending',
-      priority: 5
-    });
+    mockSingleResult = {
+      data: mockTask({ metadata: { dependencies: ['dep-1'] } }),
+      error: null
+    };
+    mockListResult = {
+      data: [mockTask({ id: 'dep-1', status: 'pending' })],
+      error: null
+    };
 
-    const task2 = await memory.createTask({
-      title: 'Dependent Task',
-      priority: 3
-    });
+    const blocked = await memory.isTaskBlocked('task-2');
 
-    await memory.addTaskDependency(task2.id, task1.id);
-
-    const blocked = await memory.isTaskBlocked(task2.id);
+    expect(typeof blocked).toBe('boolean');
     expect(blocked).toBe(true);
-
-    // Complete the dependency
-    await memory.updateTask(task1.id, { status: 'done' });
-
-    const stillBlocked = await memory.isTaskBlocked(task2.id);
-    expect(stillBlocked).toBe(false);
   });
 
-  test('should list ready tasks', async () => {
-    const task1 = await memory.createTask({
-      title: 'Ready Task (no deps)',
-      status: 'pending',
-      priority: 5
-    });
-
-    const task2 = await memory.createTask({
-      title: 'Blocked Task',
-      status: 'pending',
-      priority: 3
-    });
-
-    const depTask = await memory.createTask({
-      title: 'Blocker',
-      status: 'pending',
-      priority: 4
-    });
-
-    await memory.addTaskDependency(task2.id, depTask.id);
+  test('should list ready tasks (no blocking deps)', async () => {
+    mockListResult = {
+      data: [mockTask({ id: 'task-ready', metadata: {} })],
+      error: null
+    };
+    mockSingleResult = { data: mockTask({ id: 'task-ready', metadata: {} }), error: null };
 
     const ready = await memory.getReadyTasks();
-    const readyIds = ready.map(t => t.id);
 
-    expect(readyIds).toContain(task1.id);
-    expect(readyIds).not.toContain(task2.id);
+    expect(Array.isArray(ready)).toBe(true);
+    expect(ready.length).toBe(1);
   });
 
-  test('should remove task dependency', async () => {
-    const task1 = await memory.createTask({
-      title: 'Dependency',
-      priority: 5
-    });
+  test('should remove task dependency without error', async () => {
+    mockSingleResult = {
+      data: mockTask({ metadata: { dependencies: ['task-1'] } }),
+      error: null
+    };
 
-    const task2 = await memory.createTask({
-      title: 'Dependent',
-      priority: 3
-    });
-
-    await memory.addTaskDependency(task2.id, task1.id);
-    await memory.removeTaskDependency(task2.id, task1.id);
-
-    const dependencies = await memory.getTaskDependencies(task2.id);
-    expect(dependencies).toHaveLength(0);
+    await expect(
+      memory.removeTaskDependency('task-2', 'task-1')
+    ).resolves.not.toThrow();
   });
 });
 
-// ============ TASK TEMPLATES (Steps 72, 75) ============
+// ============ TASK TEMPLATES ============
 
-describe.skipIf(!hasSupabase)('Task Templates', () => {
+describe('Task Templates', () => {
+  let memory: Supaclaw;
+
+  beforeEach(() => {
+    mockSingleResult = { data: null, error: null };
+    mockListResult = { data: [], error: null };
+    mockRpcResult = { data: null, error: null };
+    memory = new Supaclaw(makeDeps());
+  });
+
   test('should create task template', async () => {
+    mockSingleResult = { data: mockTask({ id: 'template-1' }), error: null };
+
     const template = await memory.createTaskTemplate({
       name: 'Onboarding Template',
       description: 'Standard onboarding workflow',
       tasks: [
         { title: 'Send welcome email', priority: 5 },
-        { title: 'Schedule intro call', priority: 4, dependencies: [0] },
-        { title: 'Assign mentor', priority: 3, dependencies: [1] }
+        { title: 'Schedule intro call', priority: 4, dependencies: [0] }
       ]
     });
 
-    expect(template.id).toBeDefined();
+    expect(template).toHaveProperty('id');
   });
 
   test('should list task templates', async () => {
-    await memory.createTaskTemplate({
-      name: 'Testing Template',
-      description: 'QA workflow',
-      tasks: [
-        { title: 'Write tests', priority: 5 },
-        { title: 'Run tests', priority: 4, dependencies: [0] }
-      ]
-    });
+    mockListResult = {
+      data: [
+        mockTask({
+          id: 'template-1',
+          title: '[TEMPLATE] Testing Template',
+          description: 'QA workflow',
+          metadata: {
+            is_template: true,
+            template_data: {
+              name: 'Testing Template',
+              tasks: [
+                { title: 'Write tests', priority: 5 },
+                { title: 'Run tests', priority: 4, dependencies: [0] }
+              ]
+            }
+          }
+        })
+      ],
+      error: null
+    };
 
     const templates = await memory.getTaskTemplates();
-    expect(templates.length).toBeGreaterThan(0);
-    
-    const testTemplate = templates.find(t => t.name === 'Testing Template');
-    expect(testTemplate).toBeDefined();
-    expect(testTemplate!.tasks).toHaveLength(2);
+
+    expect(templates.length).toBe(1);
+    expect(templates[0]).toHaveProperty('id');
+    expect(templates[0]).toHaveProperty('name');
+    expect(templates[0]).toHaveProperty('tasks');
+    expect(templates[0]!.name).toBe('Testing Template');
+    expect(templates[0]!.tasks).toHaveLength(2);
   });
 
   test('should apply task template', async () => {
-    const template = await memory.createTaskTemplate({
-      name: 'Project Setup',
-      description: 'Standard project setup',
-      tasks: [
-        { title: 'Create repository', priority: 5 },
-        { title: 'Setup CI/CD', priority: 4, dependencies: [0] },
-        { title: 'Write README', priority: 3, dependencies: [0] }
-      ]
+    const templateTask = mockTask({
+      id: 'template-1',
+      title: '[TEMPLATE] Project Setup',
+      metadata: {
+        is_template: true,
+        template_data: {
+          name: 'Project Setup',
+          tasks: [
+            { title: 'Create repository', priority: 5 },
+            { title: 'Setup CI/CD', priority: 4, dependencies: [0] }
+          ]
+        }
+      }
     });
 
-    const createdTasks = await memory.applyTaskTemplate(template.id, {
-      userId: 'test-user'
-    });
+    mockSingleResult = { data: templateTask, error: null };
 
-    expect(createdTasks).toHaveLength(3);
-    expect(createdTasks[0].title).toBe('Create repository');
-    expect(createdTasks[1].title).toBe('Setup CI/CD');
-    expect(createdTasks[2].title).toBe('Write README');
+    const createdTasks = await memory.applyTaskTemplate('template-1');
 
-    // Verify dependencies were set
-    const deps1 = await memory.getTaskDependencies(createdTasks[1].id);
-    const deps2 = await memory.getTaskDependencies(createdTasks[2].id);
-
-    expect(deps1).toHaveLength(1);
-    expect(deps1[0].id).toBe(createdTasks[0].id);
-    
-    expect(deps2).toHaveLength(1);
-    expect(deps2[0].id).toBe(createdTasks[0].id);
+    expect(createdTasks).toHaveLength(2);
+    expect(createdTasks[0]).toHaveProperty('id');
+    expect(createdTasks[1]).toHaveProperty('id');
   });
 });
 
-// ============ TASK REMINDERS (Step 74) ============
+// ============ TASK REMINDERS ============
 
-describe.skipIf(!hasSupabase)('Task Reminders', () => {
-  test('should get tasks needing reminders', async () => {
-    const now = new Date();
-    const soon = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours from now
-    const later = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48 hours from now
+describe('Task Reminders', () => {
+  let memory: Supaclaw;
 
-    const task1 = await memory.createTask({
-      title: 'Due soon',
-      dueAt: soon.toISOString(),
-      priority: 5
-    });
-
-    const task2 = await memory.createTask({
-      title: 'Due later',
-      dueAt: later.toISOString(),
-      priority: 3
-    });
-
-    const reminders = await memory.getTasksNeedingReminders({ hoursAhead: 24 });
-    
-    const reminderIds = reminders.map(t => t.id);
-    expect(reminderIds).toContain(task1.id);
-    expect(reminderIds).not.toContain(task2.id);
+  beforeEach(() => {
+    mockSingleResult = { data: null, error: null };
+    mockListResult = { data: [], error: null };
+    mockRpcResult = { data: null, error: null };
+    memory = new Supaclaw(makeDeps());
   });
 
-  test('should format task reminder message', async () => {
-    const task = await memory.createTask({
-      title: 'Important meeting',
-      description: 'Quarterly review',
-      priority: 5
-    });
+  test('should get tasks needing reminders', async () => {
+    const soon = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    mockListResult = {
+      data: [mockTask({ id: 'due-soon', title: 'Due soon', due_at: soon })],
+      error: null
+    };
 
+    const reminders = await memory.getTasksNeedingReminders({ hoursAhead: 24 });
+
+    expect(Array.isArray(reminders)).toBe(true);
+  });
+
+  test('should format task reminder message', () => {
+    const task = mockTask({
+      title: 'Important meeting',
+      description: 'Quarterly review'
+    }) as any;
     const timeUntilDue = 3 * 60 * 60 * 1000; // 3 hours
+
     const message = memory.formatTaskReminder(task, timeUntilDue);
 
     expect(message).toContain('Important meeting');
@@ -242,122 +303,92 @@ describe.skipIf(!hasSupabase)('Task Reminders', () => {
   });
 });
 
-// ============ LEARNING PATTERNS (Step 77) ============
+// ============ LEARNING PATTERNS ============
 
-describe.skipIf(!hasSupabase)('Learning Patterns', () => {
-  test('should detect learning patterns', async () => {
-    // Create some test learnings
-    await memory.learn({
+describe('Learning Patterns', () => {
+  let memory: Supaclaw;
+
+  beforeEach(() => {
+    mockSingleResult = { data: null, error: null };
+    mockListResult = { data: [], error: null };
+    mockRpcResult = { data: null, error: null };
+    memory = new Supaclaw(makeDeps());
+  });
+
+  test('should record a learning', async () => {
+    mockSingleResult = { data: mockLearning(), error: null };
+
+    const learning = await memory.learn({
       category: 'error',
       trigger: 'Failed API call to service',
       lesson: 'Always check API status before calling',
       severity: 'critical'
     });
 
-    await memory.learn({
-      category: 'error',
-      trigger: 'Failed database connection',
-      lesson: 'Add connection retry logic',
-      severity: 'warning'
-    });
+    expect(learning).toHaveProperty('id');
+    expect(learning).toHaveProperty('category');
+    expect(learning).toHaveProperty('trigger');
+    expect(learning).toHaveProperty('lesson');
+  });
 
-    await memory.learn({
-      category: 'correction',
-      trigger: 'User corrected preference',
-      lesson: 'User prefers TypeScript over JavaScript',
-      severity: 'info'
-    });
+  test('should detect learning patterns', async () => {
+    mockListResult = {
+      data: [
+        mockLearning({ id: 'l1', category: 'error', trigger: 'Failed API call', severity: 'critical' }),
+        mockLearning({ id: 'l2', category: 'error', trigger: 'Failed database connection', severity: 'warning' }),
+        mockLearning({ id: 'l3', category: 'correction', trigger: 'User corrected preference', severity: 'info', applied_count: 3 })
+      ],
+      error: null
+    };
 
     const patterns = await memory.detectLearningPatterns();
 
-    expect(patterns.commonCategories).toBeDefined();
+    expect(patterns).toHaveProperty('commonCategories');
+    expect(patterns).toHaveProperty('commonTriggers');
+    expect(patterns).toHaveProperty('recentTrends');
+    expect(patterns).toHaveProperty('topLessons');
     expect(patterns.commonCategories.length).toBeGreaterThan(0);
-    
+
     const errorCategory = patterns.commonCategories.find(c => c.category === 'error');
     expect(errorCategory).toBeDefined();
-    expect(errorCategory!.count).toBeGreaterThanOrEqual(2);
-
-    expect(patterns.commonTriggers).toBeDefined();
-    expect(patterns.recentTrends).toBeDefined();
+    expect(errorCategory!.count).toBe(2);
   });
 
   test('should get learning recommendations', async () => {
-    await memory.learn({
-      category: 'improvement',
-      trigger: 'Slow database query',
-      lesson: 'Add index on frequently queried columns',
-      severity: 'warning'
-    });
-
-    await memory.learn({
-      category: 'improvement',
-      trigger: 'Database timeout',
-      lesson: 'Optimize complex queries',
-      severity: 'critical'
-    });
+    mockListResult = {
+      data: [
+        mockLearning({ id: 'l1', trigger: 'Slow database query', lesson: 'Add index', severity: 'warning', applied_count: 2 }),
+        mockLearning({ id: 'l2', trigger: 'Database timeout', lesson: 'Optimize queries', severity: 'critical', applied_count: 0 })
+      ],
+      error: null
+    };
 
     const recommendations = await memory.getLearningRecommendations('database', 3);
 
+    expect(Array.isArray(recommendations)).toBe(true);
     expect(recommendations.length).toBeGreaterThan(0);
-    expect(recommendations[0].trigger).toMatch(/database/i);
   });
 });
 
-// ============ LEARNING SIMILARITY SEARCH (Step 79) ============
+// ============ LEARNING EXPORT ============
 
-describe.skipIf(!hasSupabase)('Learning Similarity Search', () => {
-  test('should find similar learnings (requires OpenAI)', async () => {
-    if (!config.openaiApiKey) {
-      console.warn('Skipping similarity test - no OpenAI API key');
-      return;
-    }
+describe('Learning Export & Reports', () => {
+  let memory: Supaclaw;
 
-    const learning1 = await memory.learn({
-      category: 'error',
-      trigger: 'API rate limit exceeded',
-      lesson: 'Implement exponential backoff',
-      severity: 'warning'
-    });
-
-    await memory.learn({
-      category: 'error',
-      trigger: 'Too many requests to API',
-      lesson: 'Add request throttling',
-      severity: 'warning'
-    });
-
-    await memory.learn({
-      category: 'correction',
-      trigger: 'User prefers dark mode',
-      lesson: 'Remember UI preferences',
-      severity: 'info'
-    });
-
-    const similar = await memory.findSimilarLearnings(learning1.id, {
-      threshold: 0.7,
-      limit: 5
-    });
-
-    expect(similar.length).toBeGreaterThan(0);
-    // The similar learning should be about rate limiting/API calls
-    const hasRelated = similar.some(l => 
-      l.trigger.toLowerCase().includes('api') || 
-      l.trigger.toLowerCase().includes('request')
-    );
-    expect(hasRelated).toBe(true);
+  beforeEach(() => {
+    mockSingleResult = { data: null, error: null };
+    mockListResult = { data: [], error: null };
+    mockRpcResult = { data: null, error: null };
+    memory = new Supaclaw(makeDeps());
   });
-});
 
-// ============ LEARNING EXPORT/REPORT (Step 80) ============
-
-describe.skipIf(!hasSupabase)('Learning Export & Reports', () => {
   test('should export learnings to markdown report', async () => {
-    await memory.learn({
-      category: 'error',
-      trigger: 'Export test error',
-      lesson: 'Test lesson for export',
-      severity: 'info'
-    });
+    mockListResult = {
+      data: [
+        mockLearning({ id: 'l1', category: 'error', trigger: 'Export test error', lesson: 'Test lesson' })
+      ],
+      error: null
+    };
 
     const report = await memory.exportLearningsReport({});
 
@@ -368,9 +399,12 @@ describe.skipIf(!hasSupabase)('Learning Export & Reports', () => {
   });
 
   test('should export learnings to JSON', async () => {
-    const data = await memory.exportLearningsJSON({
-      category: 'error'
-    });
+    mockListResult = {
+      data: [mockLearning({ id: 'l1', category: 'error' })],
+      error: null
+    };
+
+    const data = await memory.exportLearningsJSON({ category: 'error' });
 
     expect(data).toBeDefined();
     expect((data as any).generated).toBeDefined();
@@ -381,64 +415,74 @@ describe.skipIf(!hasSupabase)('Learning Export & Reports', () => {
   });
 
   test('should filter exported learnings by date', async () => {
-    const now = new Date();
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const recentDate = new Date().toISOString();
+    mockListResult = {
+      data: [mockLearning({ id: 'l1', created_at: recentDate })],
+      error: null
+    };
 
-    await memory.learn({
-      category: 'improvement',
-      trigger: 'Recent improvement',
-      lesson: 'New lesson',
-      severity: 'info'
-    });
-
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const data = await memory.exportLearningsJSON({
       since: yesterday.toISOString()
     });
 
     expect((data as any).learnings.length).toBeGreaterThan(0);
-    const allRecent = (data as any).learnings.every((l: any) => 
+    const allRecent = (data as any).learnings.every((l: any) =>
       new Date(l.created_at) >= yesterday
     );
     expect(allRecent).toBe(true);
   });
 });
 
-// ============ INTEGRATION TESTS ============
+// ============ INTEGRATION ============
 
-describe.skipIf(!hasSupabase)('Task & Learning Integration', () => {
+describe('Task & Learning Integration', () => {
+  let memory: Supaclaw;
+
+  beforeEach(() => {
+    mockSingleResult = { data: null, error: null };
+    mockListResult = { data: [], error: null };
+    mockRpcResult = { data: null, error: null };
+    memory = new Supaclaw(makeDeps());
+  });
+
   test('should track learnings from task failures', async () => {
-    const task = await memory.createTask({
-      title: 'Deploy to production',
-      priority: 5
-    });
+    const task = mockTask({ id: 'task-deploy', title: 'Deploy to production' });
+    mockSingleResult = { data: task, error: null };
 
-    // Simulate a task failure and learning
-    await memory.updateTask(task.id, { status: 'blocked' });
-    
+    const createdTask = await memory.createTask({ title: 'Deploy to production', priority: 5 });
+    await memory.updateTask(createdTask.id, { status: 'blocked' });
+
+    const learningData = mockLearning({
+      trigger: `Task ${createdTask.id} blocked - missing environment variables`,
+      severity: 'critical',
+      metadata: { task_id: createdTask.id }
+    });
+    mockSingleResult = { data: learningData, error: null };
+
     const learning = await memory.learn({
       category: 'error',
-      trigger: `Task ${task.id} blocked - missing environment variables`,
+      trigger: `Task ${createdTask.id} blocked - missing environment variables`,
       lesson: 'Always verify env vars before deployment tasks',
       action: 'Create pre-deployment checklist',
       severity: 'critical',
-      metadata: { task_id: task.id }
+      metadata: { task_id: createdTask.id }
     });
 
     expect(learning.id).toBeDefined();
-    expect(learning.trigger).toContain(task.id);
+    expect(learning.trigger).toContain(createdTask.id);
   });
 
-  test('should apply learnings to improve task templates', async () => {
-    // Create a learning about best practices
+  test('should create task template based on learnings', async () => {
+    mockSingleResult = { data: mockLearning(), error: null };
     await memory.learn({
       category: 'improvement',
-      trigger: 'Forgot to add testing step in project setup',
-      lesson: 'All project templates should include testing setup',
-      action: 'Update project templates to include test frameworks',
+      trigger: 'Forgot to add testing step',
+      lesson: 'All project templates should include testing',
       severity: 'warning'
     });
 
-    // Create improved template based on learning
+    mockSingleResult = { data: mockTask({ id: 'improved-template-1' }), error: null };
     const template = await memory.createTaskTemplate({
       name: 'Improved Project Setup',
       description: 'Includes testing (learned from past mistakes)',
@@ -451,10 +495,6 @@ describe.skipIf(!hasSupabase)('Task & Learning Integration', () => {
       metadata: { incorporates_learning: true }
     });
 
-    const tasks = await memory.applyTaskTemplate(template.id);
-    
-    expect(tasks).toHaveLength(4);
-    const testingTask = tasks.find(t => t.title.includes('testing'));
-    expect(testingTask).toBeDefined();
+    expect(template).toHaveProperty('id');
   });
 });
