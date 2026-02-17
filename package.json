@@ -4,6 +4,20 @@
   "description": "Persistent memory for AI agents using Supabase - sessions, memories, semantic search",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    },
+    "./errors": {
+      "types": "./dist/error-handling.d.ts",
+      "require": "./dist/error-handling.js"
+    },
+    "./context": {
+      "types": "./dist/context-manager.d.ts",
+      "require": "./dist/context-manager.js"
+    }
+  },
   "bin": {
     "supaclaw": "dist/cli.js"
   },

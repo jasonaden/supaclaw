@@ -340,11 +340,11 @@ export async function batchWithErrorHandling<T, R>(
   );
 
   return results.map((result, index) => {
-    const item = items[index];
-    
+    const item = items[index]!;
+
     if (result.status === 'fulfilled') {
       return {
-        success: true,
+        success: true as const,
         result: result.value.result,
         item,
       };
@@ -352,7 +352,7 @@ export async function batchWithErrorHandling<T, R>(
       const error = result.reason as Error;
       opts.onError(item, error);
       return {
-        success: false,
+        success: false as const,
         error,
         item,
       };

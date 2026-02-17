@@ -151,7 +151,7 @@ export class Supaclaw {
         input: text,
       });
 
-      return response.data[0].embedding;
+      return response.data[0]!.embedding;
     }
 
     // TODO: Add Voyage AI support
@@ -175,9 +175,9 @@ export class Supaclaw {
     let normB = 0;
 
     for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i] * b[i];
-      normA += a[i] * a[i];
-      normB += b[i] * b[i];
+      dotProduct += a[i]! * b[i]!;
+      normA += a[i]! * a[i]!;
+      normB += b[i]! * b[i]!;
     }
 
     const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
@@ -439,7 +439,7 @@ export class Supaclaw {
           });
           currentContent = [];
         }
-        currentRole = roleMatch[1].toLowerCase() as typeof currentRole;
+        currentRole = roleMatch[1]!.toLowerCase() as typeof currentRole;
       } else if (line.startsWith('##') || line.startsWith('**')) {
         // Skip headers and metadata
         continue;
@@ -860,17 +860,17 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
       updated_at: new Date().toISOString()
     };
 
-    if (updates.title !== undefined) updateData.title = updates.title;
-    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.title !== undefined) updateData['title'] = updates.title;
+    if (updates.description !== undefined) updateData['description'] = updates.description;
     if (updates.status !== undefined) {
-      updateData.status = updates.status;
+      updateData['status'] = updates.status;
       if (updates.status === 'done') {
-        updateData.completed_at = new Date().toISOString();
+        updateData['completed_at'] = new Date().toISOString();
       }
     }
-    if (updates.priority !== undefined) updateData.priority = updates.priority;
-    if (updates.dueAt !== undefined) updateData.due_at = updates.dueAt;
-    if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
+    if (updates.priority !== undefined) updateData['priority'] = updates.priority;
+    if (updates.dueAt !== undefined) updateData['due_at'] = updates.dueAt;
+    if (updates.metadata !== undefined) updateData['metadata'] = updates.metadata;
 
     const { data, error } = await this.supabase
       .from('tasks')
@@ -1274,7 +1274,7 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
       id: task.id,
       name: task.title.replace('[TEMPLATE] ', ''),
       description: task.description,
-      tasks: (task.metadata?.template_data as any)?.tasks || []
+      tasks: ((task.metadata?.template_data as Record<string, unknown> | undefined)?.['tasks'] as { title: string; description?: string; priority?: number; estimatedDuration?: string; dependencies?: number[]; }[]) || []
     }));
   }
 
@@ -1294,17 +1294,19 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
 
     if (template.error) throw template.error;
 
-    const templateData = template.data.metadata?.template_data as any;
-    if (!templateData?.tasks) {
+    const templateData = template.data.metadata?.template_data as Record<string, unknown> | undefined;
+    if (!templateData?.['tasks']) {
       throw new Error('Invalid template data');
     }
+
+    const tasksList = templateData['tasks'] as { title: string; description?: string; priority?: number; estimatedDuration?: string; dependencies?: number[]; }[];
 
     const createdTasks: Task[] = [];
     const taskIdMap = new Map<number, string>(); // template index -> created task id
 
     // Create all tasks first
-    for (let i = 0; i < templateData.tasks.length; i++) {
-      const taskDef = templateData.tasks[i];
+    for (let i = 0; i < tasksList.length; i++) {
+      const taskDef = tasksList[i]!;
       
       let dueAt: string | undefined;
       if (opts.startDate && taskDef.estimatedDuration) {
@@ -1332,8 +1334,8 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
     }
 
     // Now add dependencies
-    for (let i = 0; i < templateData.tasks.length; i++) {
-      const taskDef = templateData.tasks[i];
+    for (let i = 0; i < tasksList.length; i++) {
+      const taskDef = tasksList[i]!;
       if (taskDef.dependencies && taskDef.dependencies.length > 0) {
         const taskId = taskIdMap.get(i);
         if (taskId) {
@@ -1430,11 +1432,11 @@ Return as JSON array: [{"content": "...", "category": "fact|decision|preference|
       const date = new Date(l.created_at);
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay());
-      const weekKey = weekStart.toISOString().split('T')[0];
-      
+      const weekKey = weekStart.toISOString().split('T')[0]!;
+
       const existing = weekMap.get(weekKey) || { count: 0, severities: [] };
       existing.count++;
-      existing.severities.push(l.severity);
+      existing.severities.push(l.severity as string);
       weekMap.set(weekKey, existing);
     });
     const recentTrends = Array.from(weekMap.entries())
@@ -1773,11 +1775,11 @@ Format: {"entities": [{"type": "...", "name": "...", "description": "..."}]}`
   }>): Promise<Entity> {
     const updateData: Record<string, unknown> = {};
 
-    if (updates.name !== undefined) updateData.name = updates.name;
-    if (updates.aliases !== undefined) updateData.aliases = updates.aliases;
-    if (updates.description !== undefined) updateData.description = updates.description;
-    if (updates.properties !== undefined) updateData.properties = updates.properties;
-    if (updates.lastSeenAt !== undefined) updateData.last_seen_at = updates.lastSeenAt;
+    if (updates.name !== undefined) updateData['name'] = updates.name;
+    if (updates.aliases !== undefined) updateData['aliases'] = updates.aliases;
+    if (updates.description !== undefined) updateData['description'] = updates.description;
+    if (updates.properties !== undefined) updateData['properties'] = updates.properties;
+    if (updates.lastSeenAt !== undefined) updateData['last_seen_at'] = updates.lastSeenAt;
 
     // Increment mention count
     const entity = await this.supabase
@@ -1788,7 +1790,7 @@ Format: {"entities": [{"type": "...", "name": "...", "description": "..."}]}`
 
     if (entity.error) throw entity.error;
 
-    updateData.mention_count = (entity.data.mention_count || 0) + 1;
+    updateData['mention_count'] = (entity.data.mention_count || 0) + 1;
 
     const { data, error } = await this.supabase
       .from('entities')
@@ -2611,10 +2613,10 @@ Focus on important entities and clear relationships. Use standard relationship t
       const combinedMetadata = {
         ...keep.metadata,
         merged_from: [
-          ...(keep.metadata?.merged_from as string[] || []),
+          ...((keep.metadata?.['merged_from'] as string[]) || []),
           merge.id
         ],
-        merge_count: (keep.metadata?.merge_count as number || 0) + 1,
+        merge_count: ((keep.metadata?.['merge_count'] as number) || 0) + 1,
         last_merged: new Date().toISOString()
       };
 

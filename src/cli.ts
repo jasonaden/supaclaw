@@ -299,7 +299,7 @@ async function cmdSearch(query: string, options: {
   const supabase = getSupabaseClient(config);
 
   try {
-    let data: any[] = [];
+    let data: Record<string, unknown>[] = [];
 
     if (mode === 'keyword') {
       // Traditional keyword search
@@ -315,7 +315,7 @@ async function cmdSearch(query: string, options: {
       data = results || [];
     } else if (mode === 'semantic') {
       // Vector similarity search (requires OpenAI API key)
-      const openaiKey = process.env.OPENAI_API_KEY;
+      const openaiKey = process.env['OPENAI_API_KEY'];
       if (!openaiKey) {
         console.error('❌ OPENAI_API_KEY environment variable required for semantic search');
         process.exit(1);
@@ -323,13 +323,13 @@ async function cmdSearch(query: string, options: {
 
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({ apiKey: openaiKey });
-      
+
       const embeddingResponse = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: query,
       });
-      
-      const queryEmbedding = embeddingResponse.data[0].embedding;
+
+      const queryEmbedding = embeddingResponse.data[0]!.embedding;
 
       const { data: results, error } = await supabase.rpc('match_memories', {
         query_embedding: queryEmbedding,
@@ -342,7 +342,7 @@ async function cmdSearch(query: string, options: {
       data = results || [];
     } else if (mode === 'hybrid') {
       // Hybrid search: vector + keyword
-      const openaiKey = process.env.OPENAI_API_KEY;
+      const openaiKey = process.env['OPENAI_API_KEY'];
       if (!openaiKey) {
         console.error('❌ OPENAI_API_KEY environment variable required for hybrid search');
         process.exit(1);
@@ -350,13 +350,13 @@ async function cmdSearch(query: string, options: {
 
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({ apiKey: openaiKey });
-      
+
       const embeddingResponse = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: query,
       });
-      
-      const queryEmbedding = embeddingResponse.data[0].embedding;
+
+      const queryEmbedding = embeddingResponse.data[0]!.embedding;
 
       const { data: results, error } = await supabase.rpc('hybrid_search_memories', {
         query_embedding: queryEmbedding,
@@ -377,17 +377,17 @@ async function cmdSearch(query: string, options: {
     }
 
     console.log(`Found ${data.length} memories:\n`);
-    data.forEach((mem: any, idx: number) => {
-      const scoreLabel = mem.similarity ? `similarity: ${mem.similarity.toFixed(3)}` :
-                        mem.score ? `score: ${mem.score.toFixed(3)}` :
-                        `importance: ${mem.importance}`;
-      
-      console.log(`${idx + 1}. [${mem.category || 'none'}] (${scoreLabel})`);
-      console.log(`   ${mem.content}`);
-      if (mem.metadata && Object.keys(mem.metadata).length > 0) {
-        console.log(`   Metadata: ${JSON.stringify(mem.metadata)}`);
+    data.forEach((mem: Record<string, unknown>, idx: number) => {
+      const scoreLabel = mem['similarity'] ? `similarity: ${(mem['similarity'] as number).toFixed(3)}` :
+                        mem['score'] ? `score: ${(mem['score'] as number).toFixed(3)}` :
+                        `importance: ${mem['importance']}`;
+
+      console.log(`${idx + 1}. [${mem['category'] || 'none'}] (${scoreLabel})`);
+      console.log(`   ${mem['content']}`);
+      if (mem['metadata'] && Object.keys(mem['metadata'] as Record<string, unknown>).length > 0) {
+        console.log(`   Metadata: ${JSON.stringify(mem['metadata'])}`);
       }
-      console.log(`   Created: ${new Date(mem.created_at).toLocaleString()}\n`);
+      console.log(`   Created: ${new Date(mem['created_at'] as string).toLocaleString()}\n`);
     });
 
   } catch (err) {
@@ -688,7 +688,7 @@ async function cmdTag(memoryId: string, tags: string[]): Promise<void> {
     });
 
     const result = await memory.tagMemory(memoryId, tags);
-    const allTags = result.metadata?.tags as string[] || [];
+    const allTags = (result.metadata?.['tags'] as string[]) || [];
 
     console.log(`✅ Tagged memory ${memoryId}`);
     console.log(`   Tags: ${allTags.join(', ')}`);
@@ -714,7 +714,7 @@ async function cmdUntag(memoryId: string, tags: string[]): Promise<void> {
     });
 
     const result = await memory.untagMemory(memoryId, tags);
-    const allTags = result.metadata?.tags as string[] || [];
+    const allTags = (result.metadata?.['tags'] as string[]) || [];
 
     console.log(`✅ Removed tags from memory ${memoryId}`);
     console.log(`   Remaining tags: ${allTags.length > 0 ? allTags.join(', ') : 'none'}`);
@@ -752,7 +752,7 @@ async function cmdSearchTags(tags: string[], options: {
 
     console.log(`\nFound ${results.length} memories:\n`);
     results.forEach((mem, i) => {
-      const memTags = mem.metadata?.tags as string[] || [];
+      const memTags = (mem.metadata?.['tags'] as string[]) || [];
       console.log(`${i + 1}. [${mem.category || 'uncategorized'}] ${mem.content.slice(0, 80)}...`);
       console.log(`   Tags: ${memTags.join(', ')}`);
       console.log(`   Importance: ${mem.importance}`);
@@ -1136,7 +1136,7 @@ program
       process.exit(1);
     }
 
-    const apiKey = options.openaiKey || process.env.OPENAI_API_KEY;
+    const apiKey = options.openaiKey || process.env['OPENAI_API_KEY'];
     if (!apiKey) {
       console.error('❌ OpenAI API key required. Provide via --openai-key or OPENAI_API_KEY env var.');
       process.exit(1);
@@ -1557,7 +1557,7 @@ program
       process.exit(1);
     }
 
-    const apiKey = options.openaiKey || process.env.OPENAI_API_KEY;
+    const apiKey = options.openaiKey || process.env['OPENAI_API_KEY'];
     if (!apiKey) {
       console.error('❌ OpenAI API key required. Provide via --openai-key or OPENAI_API_KEY env var.');
       process.exit(1);

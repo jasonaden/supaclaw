@@ -17,7 +17,7 @@ export interface ParsedMemory {
   content: string;
   category: string;
   importance: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   created_at?: string;
 }
 
@@ -34,7 +34,7 @@ export interface ParsedMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ParsedTask {
@@ -43,7 +43,7 @@ export interface ParsedTask {
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   priority?: number;
   due_date?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ParsedLearning {
@@ -122,14 +122,14 @@ export function parseMemoryMd(filePath: string): ParsedMemory[] {
       // Extract [importance: X] tags
       const importanceMatch = memoryText.match(/\[importance:\s*([\d.]+)\]/i);
       if (importanceMatch) {
-        importance = parseFloat(importanceMatch[1]);
-        memoryText = memoryText.replace(importanceMatch[0], '').trim();
+        importance = parseFloat(importanceMatch[1]!);
+        memoryText = memoryText.replace(importanceMatch[0]!, '').trim();
       }
 
       // Extract [YYYY-MM-DD] dates
       const dateMatch = memoryText.match(/\[(\d{4}-\d{2}-\d{2})\]/);
       if (dateMatch) {
-        createdAt = dateMatch[1];
+        createdAt = dateMatch[1]!;
         memoryText = memoryText.replace(dateMatch[0], '').trim();
       }
 
@@ -381,8 +381,8 @@ export function parseTodoMd(filePath: string): ParsedTask[] {
     // Task items
     const taskMatch = trimmed.match(/^[-*]\s*\[([ x~])\]\s*(.+)$/i);
     if (taskMatch) {
-      const statusChar = taskMatch[1];
-      let taskText = taskMatch[2].trim();
+      const statusChar = taskMatch[1]!;
+      let taskText = taskMatch[2]!.trim();
       
       let status: ParsedTask['status'] = 'pending';
       if (statusChar.toLowerCase() === 'x') status = 'completed';
@@ -457,7 +457,7 @@ export function parseLearningsMd(filePath: string): ParsedLearning[] {
         const header = trimmed.slice(3).trim();
         const catMatch = header.match(/Category:\s*(.+)/i);
         if (catMatch) {
-          category = catMatch[1].trim().toLowerCase();
+          category = catMatch[1]!.trim().toLowerCase();
         }
         continue;
       }
@@ -465,25 +465,25 @@ export function parseLearningsMd(filePath: string): ParsedLearning[] {
       // Field lines
       const triggerMatch = trimmed.match(/^\*\*Trigger\*\*:\s*(.+)/i);
       if (triggerMatch) {
-        trigger = triggerMatch[1].trim();
+        trigger = triggerMatch[1]!.trim();
         continue;
       }
 
       const lessonMatch = trimmed.match(/^\*\*Lesson\*\*:\s*(.+)/i);
       if (lessonMatch) {
-        lesson = lessonMatch[1].trim();
+        lesson = lessonMatch[1]!.trim();
         continue;
       }
 
       const importanceMatch = trimmed.match(/^\*\*Importance\*\*:\s*([\d.]+)/i);
       if (importanceMatch) {
-        importance = parseFloat(importanceMatch[1]);
+        importance = parseFloat(importanceMatch[1]!);
         continue;
       }
 
       const dateMatch = trimmed.match(/^\*\*Date\*\*:\s*(\d{4}-\d{2}-\d{2})/i);
       if (dateMatch) {
-        createdAt = dateMatch[1];
+        createdAt = dateMatch[1]!;
         continue;
       }
     }

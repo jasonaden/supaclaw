@@ -206,7 +206,7 @@ export function arrangeForLostInMiddle(items: ContextItem[]): ContextItem[] {
   // High-importance items at beginning
   for (let i = 0; i < half; i++) {
     if (i % 2 === 0) {
-      arranged.push(sorted[i]);
+      arranged.push(sorted[i]!);
     }
   }
 
@@ -217,7 +217,7 @@ export function arrangeForLostInMiddle(items: ContextItem[]): ContextItem[] {
   // Remaining high-importance items at end
   for (let i = 0; i < half; i++) {
     if (i % 2 === 1) {
-      arranged.push(sorted[i]);
+      arranged.push(sorted[i]!);
     }
   }
 
