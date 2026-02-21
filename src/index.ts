@@ -275,12 +275,13 @@ export class Supaclaw {
   async endSession(sessionId: string, opts: {
     summary?: string;
     autoSummarize?: boolean;
+    summarizeModel?: string;
   } = {}): Promise<Session> {
     let summary = opts.summary;
 
     // Auto-generate summary if requested
     if (opts.autoSummarize && !summary && this.openai) {
-      summary = await this.generateSessionSummary(sessionId);
+      summary = await this.generateSessionSummary(sessionId, opts.summarizeModel);
     }
 
     const { data, error } = await this.supabase
@@ -300,7 +301,7 @@ export class Supaclaw {
   /**
    * Generate an AI summary of a session
    */
-  async generateSessionSummary(sessionId: string): Promise<string> {
+  async generateSessionSummary(sessionId: string, model?: string): Promise<string> {
     if (!this.openai) {
       throw new Error('OpenAI client required for auto-summarization');
     }
@@ -315,7 +316,7 @@ export class Supaclaw {
       .join('\n');
 
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: model || 'gpt-4o-mini',
       messages: [
         {
           role: 'system',

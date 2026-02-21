@@ -118,3 +118,50 @@ describe('Supaclaw.getOrCreateSession', () => {
     );
   });
 });
+
+describe('Supaclaw.endSession with summarizeModel', () => {
+  let mockSupabase: ReturnType<typeof createMockSupabase>;
+  let supaclaw: Supaclaw;
+
+  beforeEach(() => {
+    mockSupabase = createMockSupabase();
+    supaclaw = new Supaclaw({
+      supabaseUrl: 'http://localhost:54321',
+      supabaseKey: 'test-key',
+      agentId: 'test-agent',
+      openaiApiKey: 'test-openai-key',
+    });
+    (supaclaw as any).supabase = mockSupabase;
+  });
+
+  it('should accept summarizeModel option', async () => {
+    // Mock getMessages to return some messages
+    const getMessagesSpy = vi.spyOn(supaclaw, 'getMessages').mockResolvedValue([
+      { id: '1', session_id: 's1', role: 'user', content: 'Hello', created_at: '', metadata: {} },
+    ]);
+
+    // Mock OpenAI
+    const mockCreate = vi.fn().mockResolvedValue({
+      choices: [{ message: { content: 'Summary of conversation' } }],
+    });
+    (supaclaw as any).openai = { chat: { completions: { create: mockCreate } } };
+
+    // Mock the update
+    mockSupabase._chain.single.mockResolvedValue({
+      data: { id: 's1', ended_at: '2026-02-21T00:00:00Z', summary: 'Summary of conversation' },
+      error: null,
+    });
+
+    await supaclaw.endSession('s1', {
+      autoSummarize: true,
+      summarizeModel: 'gpt-4o',
+    });
+
+    // Verify the model was passed to OpenAI
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'gpt-4o' })
+    );
+
+    getMessagesSpy.mockRestore();
+  });
+});
