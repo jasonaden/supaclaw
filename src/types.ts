@@ -119,4 +119,13 @@ export interface SupaclawDeps {
   agentId: string;
   openai?: OpenAI;
   config: SupaclawConfig;
+  rememberFn?: (memory: {
+    content: string;
+    category?: string;
+    importance?: number;
+    userId?: string;
+    sessionId?: string;
+    expiresAt?: string;
+    metadata?: Record<string, unknown>;
+  }) => Promise<Memory>;
 }

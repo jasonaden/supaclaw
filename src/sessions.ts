@@ -11,9 +11,9 @@ export class SessionManager {
 
   /**
    * Optional callback used by extractMemoriesFromSession to persist memories.
-   * Wired up by the facade after MemoryManager is available.
+   * Injected from deps in the constructor.
    */
-  rememberFn?: (memory: {
+  private rememberFn?: (memory: {
     content: string;
     category?: string;
     importance?: number;
@@ -28,6 +28,7 @@ export class SessionManager {
     this.agentId = deps.agentId;
     this.config = deps.config;
     this.openai = deps.openai;
+    this.rememberFn = deps.rememberFn;
   }
 
   /**

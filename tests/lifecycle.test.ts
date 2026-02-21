@@ -200,9 +200,7 @@ describe('Memory Lifecycle Management', () => {
         { id: 'mem-3', metadata: { tags: ['work'] } }
       ];
 
-      // @ts-ignore
-      mockSupabase.from('memories').then = (fn: any) => 
-        fn({ data: mockMemories, error: null });
+      mockListResult = { data: mockMemories, error: null };
 
       const results = await memory.searchMemoriesByTags(['work'], {
         matchAll: false
@@ -218,9 +216,7 @@ describe('Memory Lifecycle Management', () => {
         { id: 'mem-3', metadata: { tags: ['important'] } }
       ];
 
-      // @ts-ignore
-      mockSupabase.from('memories').then = (fn: any) => 
-        fn({ data: mockMemories, error: null });
+      mockListResult = { data: mockMemories, error: null };
 
       const results = await memory.searchMemoriesByTags(['work', 'important'], {
         matchAll: true

@@ -1,7 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { sanitizeFilterInput } from './utils';
-import { wrapDatabaseOperation, wrapEmbeddingOperation, validateInput } from './error-handling';
+import { wrapDatabaseOperation, validateInput } from './error-handling';
+import { generateEmbedding, cosineSimilarity } from './embeddings';
 import type { SupaclawDeps, SupaclawConfig, Memory } from './types';
 
 export class MemoryManager {
@@ -15,63 +16,6 @@ export class MemoryManager {
     this.agentId = deps.agentId;
     this.config = deps.config;
     this.openai = deps.openai;
-  }
-
-  /**
-   * Generate embedding for text using configured provider
-   */
-  private async generateEmbedding(text: string): Promise<number[] | null> {
-    if (!this.config.embeddingProvider || this.config.embeddingProvider === 'none') {
-      return null;
-    }
-
-    if (this.config.embeddingProvider === 'openai') {
-      if (!this.openai) {
-        throw new Error('OpenAI API key not provided');
-      }
-
-      const model = this.config.embeddingModel || 'text-embedding-3-small';
-      const openai = this.openai; // already guarded above
-      return wrapEmbeddingOperation(async () => {
-        const response = await openai.embeddings.create({
-          model,
-          input: text,
-        });
-
-        return response.data[0]!.embedding;
-      }, 'generateEmbedding (memories)');
-    }
-
-    // TODO: Add Voyage AI support
-    if (this.config.embeddingProvider === 'voyage') {
-      throw new Error('Voyage AI embeddings not yet implemented');
-    }
-
-    return null;
-  }
-
-  /**
-   * Calculate cosine similarity between two vectors
-   */
-  private cosineSimilarity(a: number[], b: number[]): number {
-    if (a.length !== b.length) {
-      throw new Error('Vectors must have the same length');
-    }
-
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-
-    for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i]! * b[i]!;
-      normA += a[i]! * a[i]!;
-      normB += b[i]! * b[i]!;
-    }
-
-    const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
-    if (magnitude === 0) return 0;
-
-    return dotProduct / magnitude;
   }
 
   /**
@@ -92,7 +36,7 @@ export class MemoryManager {
     );
 
     // Generate embedding if provider configured
-    const embedding = await this.generateEmbedding(memory.content);
+    const embedding = await generateEmbedding(memory.content, this.config, this.openai);
 
     return wrapDatabaseOperation(async () => {
       const { data, error } = await this.supabase
@@ -132,7 +76,7 @@ export class MemoryManager {
     );
 
     // Generate query embedding for semantic search
-    const queryEmbedding = await this.generateEmbedding(query);
+    const queryEmbedding = await generateEmbedding(query, this.config, this.openai);
 
     if (queryEmbedding) {
       // Use pgvector for semantic search
@@ -197,7 +141,7 @@ export class MemoryManager {
     const keywordWeight = opts.keywordWeight ?? 0.3;
 
     // Generate query embedding
-    const queryEmbedding = await this.generateEmbedding(query);
+    const queryEmbedding = await generateEmbedding(query, this.config, this.openai);
 
     if (queryEmbedding) {
       // Use hybrid search RPC function
@@ -394,7 +338,7 @@ export class MemoryManager {
 
     for (let i = 0; i < memories.length; i++) {
       for (let j = i + 1; j < memories.length; j++) {
-        const similarity = this.cosineSimilarity(
+        const similarity = cosineSimilarity(
           memories[i]!.embedding!,
           memories[j]!.embedding!
         );

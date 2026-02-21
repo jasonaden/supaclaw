@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createInterface } from 'readline';
+import { sanitizeFilterInput } from './utils';
 
 const CONFIG_FILE = '.supaclaw.json';
 
@@ -307,7 +308,7 @@ async function cmdSearch(query: string, options: {
         .from('memories')
         .select('*')
         .eq('agent_id', config.agentId)
-        .or(`content.ilike.%${query}%,category.ilike.%${query}%`)
+        .or(`content.ilike.%${sanitizeFilterInput(query)}%,category.ilike.%${sanitizeFilterInput(query)}%`)
         .order('importance', { ascending: false })
         .limit(limit);
 

@@ -250,10 +250,6 @@ The `Supaclaw` class exposes methods across six domains. Key methods:
 
 All methods are fully typed. See `src/types.ts` for interfaces.
 
-## Contributing
-
-PRs welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md).
-
 ## License
 
 MIT

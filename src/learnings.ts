@@ -1,7 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import { sanitizeFilterInput } from './utils';
-import { wrapDatabaseOperation, wrapEmbeddingOperation } from './error-handling';
+import { wrapDatabaseOperation } from './error-handling';
+import { generateEmbedding, cosineSimilarity } from './embeddings';
 import type { SupaclawDeps, SupaclawConfig, Learning } from './types';
 
 export class LearningManager {
@@ -15,63 +16,6 @@ export class LearningManager {
     this.agentId = deps.agentId;
     this.config = deps.config;
     this.openai = deps.openai;
-  }
-
-  /**
-   * Generate embedding for text using configured provider
-   */
-  private async generateEmbedding(text: string): Promise<number[] | null> {
-    if (!this.config.embeddingProvider || this.config.embeddingProvider === 'none') {
-      return null;
-    }
-
-    if (this.config.embeddingProvider === 'openai') {
-      if (!this.openai) {
-        throw new Error('OpenAI API key not provided');
-      }
-
-      const model = this.config.embeddingModel || 'text-embedding-3-small';
-      const openai = this.openai; // already guarded above
-      return wrapEmbeddingOperation(async () => {
-        const response = await openai.embeddings.create({
-          model,
-          input: text,
-        });
-
-        return response.data[0]!.embedding;
-      }, 'generateEmbedding (learnings)');
-    }
-
-    // TODO: Add Voyage AI support
-    if (this.config.embeddingProvider === 'voyage') {
-      throw new Error('Voyage AI embeddings not yet implemented');
-    }
-
-    return null;
-  }
-
-  /**
-   * Calculate cosine similarity between two vectors
-   */
-  private cosineSimilarity(a: number[], b: number[]): number {
-    if (a.length !== b.length) {
-      throw new Error('Vectors must have the same length');
-    }
-
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-
-    for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i]! * b[i]!;
-      normA += a[i]! * a[i]!;
-      normB += b[i]! * b[i]!;
-    }
-
-    const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
-    if (magnitude === 0) return 0;
-
-    return dotProduct / magnitude;
   }
 
   /**
@@ -303,7 +247,7 @@ export class LearningManager {
 
     // Generate embedding for the learning
     const text = `${learning.data.trigger} ${learning.data.lesson} ${learning.data.action || ''}`;
-    const embedding = await this.generateEmbedding(text);
+    const embedding = await generateEmbedding(text, this.config, this.openai);
 
     if (!embedding) {
       throw new Error('Failed to generate embedding for learning');
@@ -341,7 +285,7 @@ export class LearningManager {
         lEmbedding = l.metadata.embedding as number[];
       } else {
         // Generate embedding on the fly
-        lEmbedding = await this.generateEmbedding(lText);
+        lEmbedding = await generateEmbedding(lText, this.config, this.openai);
 
         if (lEmbedding) {
           // Cache it
@@ -358,7 +302,7 @@ export class LearningManager {
       }
 
       if (lEmbedding !== null && lEmbedding.length > 0) {
-        const similarity = this.cosineSimilarity(embedding, lEmbedding!);
+        const similarity = cosineSimilarity(embedding, lEmbedding!);
         similarities.push({ ...l, similarity });
       }
     }
