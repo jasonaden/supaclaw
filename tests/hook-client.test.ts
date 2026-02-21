@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Supaclaw } from '../src/index';
 
 // Mock Supabase client
@@ -474,5 +474,100 @@ describe('SupaclawHookClient.endSession', () => {
     expect(mockSupaclaw.endSession).toHaveBeenCalled();
 
     await batchClient.destroy();
+  });
+});
+
+describe('Batch mode', () => {
+  let mockSupaclaw: any;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockSupaclaw = {
+      addMessage: vi.fn().mockResolvedValue({ id: 'msg-1' }),
+      remember: vi.fn(),
+      getSession: vi.fn(),
+      endSession: vi.fn(),
+      getOrCreateSession: vi.fn(),
+    };
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should buffer messages instead of inserting immediately', async () => {
+    const client = new SupaclawHookClient(mockSupaclaw, {
+      batchMode: true,
+      maxBatchSize: 10,
+    });
+
+    await client.logMessage('s1', 'user', 'Hello');
+    await client.logMessage('s1', 'assistant', 'Hi there');
+
+    // Not flushed yet
+    expect(mockSupaclaw.addMessage).not.toHaveBeenCalled();
+
+    await client.destroy();
+  });
+
+  it('should flush when buffer hits maxBatchSize', async () => {
+    const client = new SupaclawHookClient(mockSupaclaw, {
+      batchMode: true,
+      maxBatchSize: 3,
+    });
+
+    await client.logMessage('s1', 'user', 'Msg 1');
+    await client.logMessage('s1', 'user', 'Msg 2');
+    expect(mockSupaclaw.addMessage).not.toHaveBeenCalled();
+
+    await client.logMessage('s1', 'user', 'Msg 3'); // triggers flush
+    expect(mockSupaclaw.addMessage).toHaveBeenCalledTimes(3);
+
+    await client.destroy();
+  });
+
+  it('should flush on timer interval', async () => {
+    const client = new SupaclawHookClient(mockSupaclaw, {
+      batchMode: true,
+      flushIntervalMs: 5000,
+      maxBatchSize: 100,
+    });
+
+    await client.logMessage('s1', 'user', 'Hello');
+
+    expect(mockSupaclaw.addMessage).not.toHaveBeenCalled();
+
+    // Advance past one interval tick and flush the microtask queue
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(mockSupaclaw.addMessage).toHaveBeenCalledTimes(1);
+
+    await client.destroy();
+  });
+
+  it('should flush remaining on destroy', async () => {
+    const client = new SupaclawHookClient(mockSupaclaw, {
+      batchMode: true,
+      maxBatchSize: 100,
+    });
+
+    await client.logMessage('s1', 'user', 'Msg 1');
+    await client.logMessage('s1', 'user', 'Msg 2');
+
+    expect(mockSupaclaw.addMessage).not.toHaveBeenCalled();
+
+    await client.destroy();
+
+    expect(mockSupaclaw.addMessage).toHaveBeenCalledTimes(2);
+  });
+
+  it('should not fail when flushing empty buffer', async () => {
+    const client = new SupaclawHookClient(mockSupaclaw, { batchMode: true });
+
+    await client.flush(); // should not throw
+
+    expect(mockSupaclaw.addMessage).not.toHaveBeenCalled();
+
+    await client.destroy();
   });
 });
