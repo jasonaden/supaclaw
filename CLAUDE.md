@@ -20,11 +20,11 @@ The CLI is at `dist/cli.js` (bin: `supaclaw`). Test CLI commands via `npx supacl
 ## Architecture
 
 ### Facade (`src/index.ts`)
-The `Supaclaw` class is a thin facade (~650 lines) that delegates to domain-specific managers. It supports two constructor modes:
+The `Supaclaw` class is a thin facade (~450 lines) that delegates to domain-specific managers. It supports two constructor modes:
 - **Config mode** — `new Supaclaw({ supabaseUrl, supabaseKey, agentId, ... })` creates its own Supabase/OpenAI clients
 - **DI mode** — `new Supaclaw({ supabase, agentId, config })` accepts pre-built clients (used in tests)
 
-All managers are exposed as readonly properties: `sessions`, `memories`, `entities`, `tasks`, `learnings`, `maintenance`. The facade re-exports delegate methods for backward compatibility (e.g., `memory.remember()` calls `memory.memories.remember()`). Context-building methods (`getSmartContext`, `buildOptimizedContext`, etc.) live on the facade.
+All managers are exposed as readonly properties: `sessions`, `memories`, `entities`, `tasks`, `learnings`, `maintenance`. The facade re-exports delegate methods for backward compatibility (e.g., `memory.remember()` calls `memory.memories.remember()`). Context-building methods are delegated to `ContextBuilder` (see below).
 
 ### Domain Modules
 - **`src/sessions.ts`** — `SessionManager`: conversation lifecycle (start, add messages, end with optional AI summary, resume, export/import)
@@ -35,6 +35,8 @@ All managers are exposed as readonly properties: `sessions`, `memories`, `entiti
 - **`src/maintenance.ts`** — `MaintenanceManager`: session cleanup, cleanup stats
 - **`src/types.ts`** — All shared interfaces and the `SupaclawDeps` DI interface
 - **`src/utils.ts`** — `sanitizeFilterInput()` for PostgREST injection prevention
+- **`src/context-builder.ts`** — `ContextBuilder`: wraps `getContext`, `buildOptimizedContext`, `getSmartContext`, `estimateSessionTokenUsage`, `testContextBudgets`
+- **`src/embeddings.ts`** — Shared `generateEmbedding()` and `cosineSimilarity()` used by memories, entities, and learnings managers
 
 ### Supporting Modules
 - **`src/context-manager.ts`** — Token budgeting, lost-in-middle mitigation, adaptive budget allocation. Exports `createContextBudget`, `buildContextWindow`, `formatContextWindow`.
@@ -54,7 +56,14 @@ Six tables in Supabase/Postgres: `sessions`, `messages`, `memories`, `entities`,
 - Entity relationships use `source_entity_id`/`target_entity_id` with confidence scores and `mention_count` that increments on duplicate creation
 - Domain managers accept `SupaclawDeps` (defined in `src/types.ts`) — use DI constructor in tests to inject mock Supabase clients
 - User-supplied filter values must go through `sanitizeFilterInput()` from `src/utils.ts` before use in `.or()` or `.ilike()` PostgREST calls
+- `SessionManager.rememberFn` is injected via `SupaclawDeps` at construction — the facade wires it to `MemoryManager.remember()` automatically
+- Planning docs live in `docs/internal/` (phases, roadmap, TODO); user-facing guides in `docs/guides/`
+- Public API exports only: `Supaclaw`, type interfaces, domain manager classes, error classes, Clawdbot integration. Internal utils (`safeJsonParse`, `wrapDatabaseOperation`, etc.) are not re-exported
 - Tests use vitest with `globals: true` (configured in `vitest.config.ts`); integration tests that need real Supabase use `describe.skipIf(!hasSupabase)` guards
+
+## Tests
+
+11 test files in `tests/`. Unit tests mock Supabase via DI (see `tasks-learnings.test.ts` as the pattern). Integration tests (sessions, memories, messages) require `SUPABASE_KEY` env var and are auto-skipped without it.
 
 ## TypeScript
 
