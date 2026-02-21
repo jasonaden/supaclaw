@@ -3027,4 +3027,13 @@ export {
   batchWithErrorHandling
 } from './error-handling';
 
+// Export hook client
+export {
+  createHookClient,
+  SupaclawHookClient,
+  HookClientConfig,
+  MessageFilter,
+  shouldLog,
+} from './hook-client';
+
 export default Supaclaw;

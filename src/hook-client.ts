@@ -16,7 +16,6 @@ export interface HookClientConfig {
   openaiApiKey?: string;
   embeddingProvider?: SupaclawConfig['embeddingProvider'];
   embeddingModel?: string;
-  geminiApiKey?: string;
 
   messageFilter?: MessageFilter;
   batchMode?: boolean;
@@ -242,7 +241,6 @@ export function createHookClient(config: HookClientConfig): SupaclawHookClient {
     openaiApiKey: resolved.openaiApiKey,
     embeddingProvider: resolved.embeddingProvider,
     embeddingModel: resolved.embeddingModel,
-    geminiApiKey: resolved.geminiApiKey,
   });
 
   return new SupaclawHookClient(supaclaw, resolved);
