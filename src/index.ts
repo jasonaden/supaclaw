@@ -229,6 +229,47 @@ export class Supaclaw {
   }
 
   /**
+   * Find an active session by external key, or create a new one.
+   * Used by hook integrations that track sessions by an external identifier.
+   */
+  async getOrCreateSession(externalKey: string, opts: {
+    channel?: string;
+    userId?: string;
+    metadata?: Record<string, unknown>;
+  } = {}): Promise<{ id: string; isNew: boolean }> {
+    // Look up active session by external key
+    const { data: existing, error: lookupError } = await this.supabase
+      .from('sessions')
+      .select()
+      .eq('external_key', externalKey)
+      .eq('agent_id', this.agentId)
+      .is('ended_at', null)
+      .maybeSingle();
+
+    if (lookupError) throw lookupError;
+
+    if (existing) {
+      return { id: existing.id, isNew: false };
+    }
+
+    // Create new session with external key
+    const { data: created, error: createError } = await this.supabase
+      .from('sessions')
+      .insert({
+        agent_id: this.agentId,
+        external_key: externalKey,
+        user_id: opts.userId,
+        channel: opts.channel,
+        metadata: opts.metadata || {},
+      })
+      .select()
+      .single();
+
+    if (createError) throw createError;
+    return { id: created.id, isNew: true };
+  }
+
+  /**
    * End a session with optional summary
    */
   async endSession(sessionId: string, opts: {
