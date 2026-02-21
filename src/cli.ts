@@ -2063,4 +2063,108 @@ program
     console.log(`\n🎉 Migration complete! Total items imported: ${totalImported}`);
   });
 
+// ============ WEBHOOK COMMANDS ============
+
+const webhook = program.command('webhook').description('Manage webhook sources');
+
+webhook
+  .command('register')
+  .description('Register a new webhook source')
+  .requiredOption('--name <name>', 'Name for this webhook source (e.g. "telegram-bot")')
+  .option('--agent-id <id>', 'Agent ID (defaults to config agentId)')
+  .action(async (options: { name: string; agentId?: string }) => {
+    const config = loadConfig();
+    if (!config) {
+      console.error('No config found. Run `supaclaw init` first.');
+      process.exit(1);
+    }
+    const supabase = getSupabaseClient(config);
+    const { generateWebhookSecret, hashSecret } = await import('./webhook-auth');
+
+    const agentId = options.agentId || config.agentId;
+    const secret = generateWebhookSecret();
+    const secretHash = await hashSecret(secret);
+
+    const { error } = await supabase.from('webhook_sources').insert({
+      agent_id: agentId,
+      name: options.name,
+      secret_hash: secretHash,
+    });
+
+    if (error) {
+      console.error('Failed to register webhook source:', error.message);
+      process.exit(1);
+    }
+
+    console.log('');
+    console.log('Webhook source registered: ' + options.name);
+    console.log('Agent: ' + agentId);
+    console.log('');
+    console.log('Secret (save this, shown only once):');
+    console.log('  ' + secret);
+    console.log('');
+  });
+
+webhook
+  .command('list')
+  .description('List registered webhook sources')
+  .action(async () => {
+    const config = loadConfig();
+    if (!config) {
+      console.error('No config found. Run `supaclaw init` first.');
+      process.exit(1);
+    }
+    const supabase = getSupabaseClient(config);
+
+    const { data, error } = await supabase
+      .from('webhook_sources')
+      .select('id, agent_id, name, enabled, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Failed to list webhook sources:', error.message);
+      process.exit(1);
+    }
+
+    if (!data || data.length === 0) {
+      console.log('No webhook sources registered.');
+      return;
+    }
+
+    console.log('');
+    console.log('Webhook Sources:');
+    console.log('');
+    for (const src of data) {
+      const status = src.enabled ? 'enabled' : 'disabled';
+      console.log('  ' + src.name + ' (' + src.agent_id + ') - ' + status);
+      console.log('    ID: ' + src.id + ' | Created: ' + src.created_at);
+    }
+    console.log('');
+  });
+
+webhook
+  .command('revoke')
+  .description('Disable a webhook source')
+  .argument('<id>', 'Webhook source ID')
+  .action(async (id: string) => {
+    const config = loadConfig();
+    if (!config) {
+      console.error('No config found. Run `supaclaw init` first.');
+      process.exit(1);
+    }
+    const supabase = getSupabaseClient(config);
+
+    const { error } = await supabase
+      .from('webhook_sources')
+      .update({ enabled: false })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Failed to revoke webhook source:', error.message);
+      process.exit(1);
+    }
+
+    console.log('Webhook source ' + id + ' revoked.');
+  });
+
 program.parse(process.argv);

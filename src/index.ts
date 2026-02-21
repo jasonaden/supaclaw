@@ -229,17 +229,59 @@ export class Supaclaw {
   }
 
   /**
+   * Find an active session by external key, or create a new one.
+   * Used by hook integrations that track sessions by an external identifier.
+   */
+  async getOrCreateSession(externalKey: string, opts: {
+    channel?: string;
+    userId?: string;
+    metadata?: Record<string, unknown>;
+  } = {}): Promise<{ id: string; isNew: boolean }> {
+    // Look up active session by external key
+    const { data: existing, error: lookupError } = await this.supabase
+      .from('sessions')
+      .select()
+      .eq('external_key', externalKey)
+      .eq('agent_id', this.agentId)
+      .is('ended_at', null)
+      .maybeSingle();
+
+    if (lookupError) throw lookupError;
+
+    if (existing) {
+      return { id: existing.id, isNew: false };
+    }
+
+    // Create new session with external key
+    const { data: created, error: createError } = await this.supabase
+      .from('sessions')
+      .insert({
+        agent_id: this.agentId,
+        external_key: externalKey,
+        user_id: opts.userId,
+        channel: opts.channel,
+        metadata: opts.metadata || {},
+      })
+      .select()
+      .single();
+
+    if (createError) throw createError;
+    return { id: created.id, isNew: true };
+  }
+
+  /**
    * End a session with optional summary
    */
   async endSession(sessionId: string, opts: {
     summary?: string;
     autoSummarize?: boolean;
+    summarizeModel?: string;
   } = {}): Promise<Session> {
     let summary = opts.summary;
 
     // Auto-generate summary if requested
     if (opts.autoSummarize && !summary && this.openai) {
-      summary = await this.generateSessionSummary(sessionId);
+      summary = await this.generateSessionSummary(sessionId, opts.summarizeModel);
     }
 
     const { data, error } = await this.supabase
@@ -259,7 +301,7 @@ export class Supaclaw {
   /**
    * Generate an AI summary of a session
    */
-  async generateSessionSummary(sessionId: string): Promise<string> {
+  async generateSessionSummary(sessionId: string, model?: string): Promise<string> {
     if (!this.openai) {
       throw new Error('OpenAI client required for auto-summarization');
     }
@@ -274,7 +316,7 @@ export class Supaclaw {
       .join('\n');
 
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: model || 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -2984,5 +3026,21 @@ export {
   gracefulFallback,
   batchWithErrorHandling
 } from './error-handling';
+
+// Export hook client
+export {
+  createHookClient,
+  SupaclawHookClient,
+  HookClientConfig,
+  MessageFilter,
+  shouldLog,
+} from './hook-client';
+
+// Export webhook auth utilities
+export {
+  generateWebhookSecret,
+  hashSecret,
+  verifySecret,
+} from './webhook-auth';
 
 export default Supaclaw;
