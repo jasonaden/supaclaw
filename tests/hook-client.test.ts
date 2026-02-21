@@ -309,3 +309,91 @@ describe('createHookClient', () => {
     })).toThrow(/agentId/);
   });
 });
+
+describe('SupaclawHookClient.logMessage', () => {
+  let client: SupaclawHookClient;
+  let mockSupaclaw: any;
+
+  beforeEach(() => {
+    mockSupaclaw = {
+      addMessage: vi.fn().mockResolvedValue({ id: 'msg-1' }),
+      remember: vi.fn().mockResolvedValue({ id: 'mem-1' }),
+      getOrCreateSession: vi.fn(),
+    };
+
+    client = new SupaclawHookClient(mockSupaclaw, {
+      messageFilter: {
+        skipPatterns: ['HEARTBEAT'],
+        minLength: 1,
+      },
+    });
+  });
+
+  it('should log a message in immediate mode', async () => {
+    await client.logMessage('session-1', 'user', 'Hello world');
+
+    expect(mockSupaclaw.addMessage).toHaveBeenCalledWith('session-1', {
+      role: 'user',
+      content: 'Hello world',
+      metadata: {},
+    });
+  });
+
+  it('should skip filtered messages', async () => {
+    await client.logMessage('session-1', 'user', 'HEARTBEAT ping');
+
+    expect(mockSupaclaw.addMessage).not.toHaveBeenCalled();
+  });
+
+  it('should skip empty messages', async () => {
+    await client.logMessage('session-1', 'user', '');
+
+    expect(mockSupaclaw.addMessage).not.toHaveBeenCalled();
+  });
+
+  it('should pass metadata through', async () => {
+    await client.logMessage('session-1', 'user', 'Hello', {
+      channel: 'telegram',
+      timestamp: '2026-02-21T00:00:00Z',
+    });
+
+    expect(mockSupaclaw.addMessage).toHaveBeenCalledWith('session-1', {
+      role: 'user',
+      content: 'Hello',
+      metadata: { channel: 'telegram', timestamp: '2026-02-21T00:00:00Z' },
+    });
+  });
+
+  it('should auto-remember substantial messages when enabled', async () => {
+    await client.logMessage('session-1', 'user', 'This is a substantial message that should be remembered for later use', {
+      autoRemember: true,
+      minRememberLength: 20,
+      rememberImportance: 0.7,
+    });
+
+    expect(mockSupaclaw.remember).toHaveBeenCalledWith({
+      content: 'This is a substantial message that should be remembered for later use',
+      category: 'conversation',
+      importance: 0.7,
+      sessionId: 'session-1',
+    });
+  });
+
+  it('should NOT auto-remember short messages', async () => {
+    await client.logMessage('session-1', 'user', 'ok', {
+      autoRemember: true,
+      minRememberLength: 50,
+    });
+
+    expect(mockSupaclaw.remember).not.toHaveBeenCalled();
+  });
+
+  it('should use default minRememberLength of 50', async () => {
+    await client.logMessage('session-1', 'user', 'Short msg', {
+      autoRemember: true,
+    });
+
+    // 9 chars < 50 default
+    expect(mockSupaclaw.remember).not.toHaveBeenCalled();
+  });
+});

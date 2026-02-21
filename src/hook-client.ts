@@ -94,13 +94,51 @@ export class SupaclawHookClient {
   }
 
   async logMessage(
-    _sessionId: string,
-    _role: string,
-    _content: string,
-    _opts?: Record<string, unknown>
+    sessionId: string,
+    role: string,
+    content: string,
+    opts: {
+      channel?: string;
+      timestamp?: string;
+      autoRemember?: boolean;
+      minRememberLength?: number;
+      rememberImportance?: number;
+      [key: string]: unknown;
+    } = {}
   ): Promise<void> {
-    // Implemented in Task 7
-    throw new Error('Not implemented');
+    if (!this.shouldLog(content, role)) return;
+
+    const { autoRemember, minRememberLength, rememberImportance, ...rest } = opts;
+    const metadata: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(rest)) {
+      metadata[k] = v;
+    }
+
+    if (this.batchMode) {
+      this.buffer.push({ sessionId, role, content, metadata });
+      if (this.buffer.length >= this.maxBatchSize) {
+        await this.flush();
+      }
+    } else {
+      await this.supaclaw.addMessage(sessionId, {
+        role: role as 'user' | 'assistant' | 'system' | 'tool',
+        content,
+        metadata,
+      });
+    }
+
+    // Auto-remember if enabled and message is substantial
+    if (autoRemember) {
+      const minLen = minRememberLength ?? 50;
+      if (content.length >= minLen) {
+        await this.supaclaw.remember({
+          content,
+          category: 'conversation',
+          importance: rememberImportance ?? 0.5,
+          sessionId,
+        });
+      }
+    }
   }
 
   async endSession(
