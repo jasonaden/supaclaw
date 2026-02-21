@@ -15,9 +15,10 @@ export interface SupaclawConfig {
   supabaseUrl: string;
   supabaseKey: string;
   agentId: string;
-  embeddingProvider?: 'openai' | 'voyage' | 'none';
+  embeddingProvider?: 'openai' | 'gemini' | 'voyage' | 'none';
   openaiApiKey?: string;
-  embeddingModel?: string; // Default: text-embedding-3-small
+  geminiApiKey?: string;
+  embeddingModel?: string; // Default: text-embedding-3-small (openai) or gemini-embedding-001 (gemini)
 }
 
 export interface Session {
@@ -151,6 +152,34 @@ export class Supaclaw {
       });
 
       return response.data[0].embedding;
+    }
+
+    if (this.config.embeddingProvider === 'gemini') {
+      const apiKey = this.config.geminiApiKey || process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('Gemini API key not provided (set geminiApiKey or GEMINI_API_KEY env var)');
+      }
+
+      const model = this.config.embeddingModel || 'gemini-embedding-001';
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: `models/${model}`,
+            content: { parts: [{ text }] },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Gemini embedding failed: ${response.status} ${err}`);
+      }
+
+      const data = await response.json() as { embedding?: { values?: number[] } };
+      return data.embedding?.values || null;
     }
 
     // TODO: Add Voyage AI support

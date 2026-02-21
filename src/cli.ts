@@ -12,6 +12,10 @@ interface Config {
   supabaseUrl: string;
   supabaseKey: string;
   agentId: string;
+  embeddingProvider?: 'openai' | 'gemini' | 'voyage' | 'none';
+  openaiApiKey?: string;
+  geminiApiKey?: string;
+  embeddingModel?: string;
 }
 
 // ============ CLI HELPERS ============
@@ -313,62 +317,39 @@ async function cmdSearch(query: string, options: {
 
       if (error) throw error;
       data = results || [];
-    } else if (mode === 'semantic') {
-      // Vector similarity search (requires OpenAI API key)
-      const openaiKey = process.env.OPENAI_API_KEY;
-      if (!openaiKey) {
-        console.error('❌ OPENAI_API_KEY environment variable required for semantic search');
+    } else if (mode === 'semantic' || mode === 'hybrid') {
+      // Use Supaclaw class for embedding generation (supports openai + gemini)
+      const { Supaclaw } = await import('./index');
+      const memory = new Supaclaw({
+        supabaseUrl: config.supabaseUrl,
+        supabaseKey: config.supabaseKey,
+        agentId: config.agentId,
+        embeddingProvider: config.embeddingProvider || 'none',
+        openaiApiKey: config.openaiApiKey || process.env.OPENAI_API_KEY,
+        geminiApiKey: config.geminiApiKey || process.env.GEMINI_API_KEY,
+        embeddingModel: config.embeddingModel,
+      });
+
+      if (!config.embeddingProvider || config.embeddingProvider === 'none') {
+        console.error('❌ Embedding provider required for semantic/hybrid search.');
+        console.error('   Set "embeddingProvider" to "gemini" or "openai" in .supaclaw.json');
         process.exit(1);
       }
 
-      const OpenAI = (await import('openai')).default;
-      const openai = new OpenAI({ apiKey: openaiKey });
-      
-      const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: query,
-      });
-      
-      const queryEmbedding = embeddingResponse.data[0].embedding;
-
-      const { data: results, error } = await supabase.rpc('match_memories', {
-        query_embedding: queryEmbedding,
-        match_threshold: options.minSimilarity || 0.7,
-        match_count: limit,
-        p_agent_id: config.agentId
-      });
-
-      if (error) throw error;
-      data = results || [];
-    } else if (mode === 'hybrid') {
-      // Hybrid search: vector + keyword
-      const openaiKey = process.env.OPENAI_API_KEY;
-      if (!openaiKey) {
-        console.error('❌ OPENAI_API_KEY environment variable required for hybrid search');
-        process.exit(1);
+      if (mode === 'semantic') {
+        const results = await memory.recall(query, {
+          limit,
+          minSimilarity: options.minSimilarity || 0.5,
+        });
+        data = results || [];
+      } else {
+        const results = await memory.hybridRecall(query, {
+          limit,
+          vectorWeight: 0.7,
+          keywordWeight: 0.3,
+        });
+        data = results || [];
       }
-
-      const OpenAI = (await import('openai')).default;
-      const openai = new OpenAI({ apiKey: openaiKey });
-      
-      const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: query,
-      });
-      
-      const queryEmbedding = embeddingResponse.data[0].embedding;
-
-      const { data: results, error } = await supabase.rpc('hybrid_search_memories', {
-        query_embedding: queryEmbedding,
-        query_text: query,
-        vector_weight: 0.7,
-        keyword_weight: 0.3,
-        match_count: limit,
-        p_agent_id: config.agentId
-      });
-
-      if (error) throw error;
-      data = results || [];
     }
 
     if (!data || data.length === 0) {
