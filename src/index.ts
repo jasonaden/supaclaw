@@ -3036,4 +3036,11 @@ export {
   shouldLog,
 } from './hook-client';
 
+// Export webhook auth utilities
+export {
+  generateWebhookSecret,
+  hashSecret,
+  verifySecret,
+} from './webhook-auth';
+
 export default Supaclaw;
