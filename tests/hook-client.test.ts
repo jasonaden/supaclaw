@@ -165,3 +165,71 @@ describe('Supaclaw.endSession with summarizeModel', () => {
     getMessagesSpy.mockRestore();
   });
 });
+
+// ============ Phase 2: Hook Client ============
+
+import { shouldLog, type MessageFilter } from '../src/hook-client';
+
+describe('shouldLog', () => {
+  it('should return true when no filter is configured', () => {
+    expect(shouldLog('Hello world', 'user', undefined)).toBe(true);
+  });
+
+  it('should return true when message passes all filters', () => {
+    const filter: MessageFilter = {
+      skipPatterns: ['HEARTBEAT'],
+      skipPrefixes: ['[System]'],
+      minLength: 1,
+      skipRoles: ['system'],
+    };
+    expect(shouldLog('Hello world', 'user', filter)).toBe(true);
+  });
+
+  it('should filter by skipPatterns (regex match)', () => {
+    const filter: MessageFilter = { skipPatterns: ['NO_REPLY', 'HEARTBEAT_OK'] };
+    expect(shouldLog('NO_REPLY', 'user', filter)).toBe(false);
+    expect(shouldLog('Status: HEARTBEAT_OK received', 'user', filter)).toBe(false);
+    expect(shouldLog('Hello world', 'user', filter)).toBe(true);
+  });
+
+  it('should filter by skipPrefixes', () => {
+    const filter: MessageFilter = { skipPrefixes: ['[System Message]', '[Bot]'] };
+    expect(shouldLog('[System Message] Restarting...', 'user', filter)).toBe(false);
+    expect(shouldLog('[Bot] Auto-reply', 'user', filter)).toBe(false);
+    expect(shouldLog('Hello world', 'user', filter)).toBe(true);
+  });
+
+  it('should filter by minLength', () => {
+    const filter: MessageFilter = { minLength: 5 };
+    expect(shouldLog('Hi', 'user', filter)).toBe(false);
+    expect(shouldLog('Hello world', 'user', filter)).toBe(true);
+    expect(shouldLog('', 'user', filter)).toBe(false);
+  });
+
+  it('should filter by skipRoles', () => {
+    const filter: MessageFilter = { skipRoles: ['system', 'tool'] };
+    expect(shouldLog('Hello', 'system', filter)).toBe(false);
+    expect(shouldLog('Result', 'tool', filter)).toBe(false);
+    expect(shouldLog('Hello', 'user', filter)).toBe(true);
+    expect(shouldLog('Hello', 'assistant', filter)).toBe(true);
+  });
+
+  it('should handle combined filters (all must pass)', () => {
+    const filter: MessageFilter = {
+      skipPatterns: ['HEARTBEAT'],
+      skipPrefixes: ['[System]'],
+      minLength: 3,
+      skipRoles: ['tool'],
+    };
+    // Passes all
+    expect(shouldLog('Hello world', 'user', filter)).toBe(true);
+    // Fails minLength
+    expect(shouldLog('Hi', 'user', filter)).toBe(false);
+    // Fails pattern
+    expect(shouldLog('HEARTBEAT ping', 'user', filter)).toBe(false);
+    // Fails prefix
+    expect(shouldLog('[System] reboot', 'user', filter)).toBe(false);
+    // Fails role
+    expect(shouldLog('Hello world', 'tool', filter)).toBe(false);
+  });
+});
