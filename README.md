@@ -129,11 +129,129 @@ await memory.learn({
 const relevantLearnings = await memory.searchLearnings('database');
 ```
 
+## Hook Client (Gateway Integration)
+
+The hook client wraps Supaclaw for use in chat gateways, bots, and webhook-based integrations. It adds message filtering, batch mode, auto-remember, and external-key session management.
+
+```typescript
+import { createHookClient } from 'supaclaw';
+
+const client = createHookClient({
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabaseKey: process.env.SUPABASE_KEY,
+  agentId: 'my-bot',
+  // Or load from file:
+  // configPath: '.supaclaw.json',
+
+  // Optional: filter out noise
+  messageFilter: {
+    skipPatterns: ['HEARTBEAT', 'NO_REPLY'],
+    skipPrefixes: ['[System]'],
+    minLength: 1,
+    skipRoles: ['system'],
+  },
+
+  // Optional: batch writes for high-throughput
+  batchMode: true,
+  flushIntervalMs: 5000,
+  maxBatchSize: 20,
+});
+
+// Get or create a session by external key (idempotent)
+const { id: sessionId, isNew } = await client.getOrCreateSession(
+  'telegram:chat:12345',
+  { channel: 'telegram', userId: 'user-42' }
+);
+
+// Log messages (filtered, batched if enabled)
+await client.logMessage(sessionId, 'user', 'Hello!', {
+  autoRemember: true,        // Store as long-term memory
+  minRememberLength: 50,     // Only remember substantial messages
+  rememberImportance: 0.7,
+});
+
+// Inject relevant context into prompts
+const context = await client.getRelevantContext('What stack are we using?', {
+  limit: 5,
+  mode: 'hybrid',  // 'hybrid' | 'semantic' | 'keyword'
+});
+// Returns formatted markdown: "## Relevant Memories\n- [preference] User prefers TypeScript..."
+
+// End session (idempotent, flushes buffer first)
+await client.endSession(sessionId, {
+  autoSummarize: true,
+  summarizeModel: 'gpt-4o',  // Override default gpt-4o-mini
+});
+
+// Cleanup on shutdown
+await client.destroy();
+```
+
+## Webhook API
+
+External services can log conversations via HTTP using Supabase Edge Functions. No SDK needed.
+
+### Setup
+
+1. **Run migrations** to add the `webhook_sources` table and `external_key` column:
+
+```bash
+# Apply via Supabase CLI
+supabase db push
+```
+
+2. **Register a webhook source** (generates a secret):
+
+```bash
+npx supaclaw webhook register --name "telegram-bot"
+# Outputs: whsec_... (save this)
+```
+
+3. **Deploy Edge Functions:**
+
+```bash
+supabase functions deploy supaclaw-webhook
+supabase functions deploy webhook-admin  # Optional: admin UI
+```
+
+### Endpoints
+
+All requests are `POST` with `Authorization: Bearer whsec_...` header.
+
+```bash
+# Get or create a session
+curl -X POST https://<project>.supabase.co/functions/v1/supaclaw-webhook/get-or-create-session \
+  -H "Authorization: Bearer whsec_..." \
+  -H "Content-Type: application/json" \
+  -d '{"external_key": "chat:12345", "channel": "telegram"}'
+
+# Log a message
+curl -X POST https://<project>.supabase.co/functions/v1/supaclaw-webhook/log-message \
+  -H "Authorization: Bearer whsec_..." \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "uuid", "role": "user", "content": "Hello!"}'
+
+# End a session
+curl -X POST https://<project>.supabase.co/functions/v1/supaclaw-webhook/end-session \
+  -H "Authorization: Bearer whsec_..." \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "uuid"}'
+```
+
+### Managing Sources
+
+```bash
+npx supaclaw webhook list       # List all sources
+npx supaclaw webhook revoke <id> # Disable a source
+```
+
+Or use the admin UI at `https://<project>.supabase.co/functions/v1/webhook-admin`.
+
 ## Database Schema
 
 ### Sessions
 ```sql
-sessions (id, agent_id, user_id, channel, started_at, ended_at, summary, metadata)
+sessions (id, agent_id, user_id, channel, external_key, started_at, ended_at, summary, metadata)
 ```
 
 ### Messages
@@ -165,6 +283,11 @@ tasks (id, agent_id, title, status, priority, due_at, ...)
 ### Learnings
 ```sql
 learnings (id, agent_id, category, trigger, lesson, action, severity, ...)
+```
+
+### Webhook Sources
+```sql
+webhook_sources (id, agent_id, name, secret_hash, allowed_actions, enabled, created_at)
 ```
 
 See [SCHEMA.md](./SCHEMA.md) for full details.
@@ -848,6 +971,10 @@ const context = await memory.getContext(userMessage);
 - [x] **Memory tagging system**
 - [x] **Auto-cleanup old sessions**
 - [x] **Cleanup statistics & monitoring**
+- [x] **Hook client** (gateway integration with filtering, batching, auto-remember)
+- [x] **Webhook API** (Edge Functions for HTTP-based integrations)
+- [x] **Webhook admin UI** (manage sources via browser)
+- [x] **External-key session management** (idempotent get-or-create)
 
 ### 🚧 In Progress
 - [ ] Voyage AI embedding provider
@@ -856,8 +983,6 @@ const context = await memory.getContext(userMessage);
 
 ### 📋 Planned
 - [ ] Multi-agent memory sharing
-- [ ] Entity relationship tracking table
-- [ ] Memory migration tools (MEMORY.md → DB)
 - [ ] Real-time subscriptions
 - [ ] Memory access logging
 - [ ] Memory reactions/ratings
