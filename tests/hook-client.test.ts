@@ -397,3 +397,82 @@ describe('SupaclawHookClient.logMessage', () => {
     expect(mockSupaclaw.remember).not.toHaveBeenCalled();
   });
 });
+
+describe('SupaclawHookClient.endSession', () => {
+  let client: SupaclawHookClient;
+  let mockSupaclaw: any;
+
+  beforeEach(() => {
+    mockSupaclaw = {
+      endSession: vi.fn().mockResolvedValue({ id: 's1', ended_at: '2026-02-21' }),
+      getSession: vi.fn(),
+      addMessage: vi.fn(),
+      remember: vi.fn(),
+      getOrCreateSession: vi.fn(),
+    };
+
+    client = new SupaclawHookClient(mockSupaclaw, {});
+  });
+
+  it('should delegate to supaclaw.endSession', async () => {
+    mockSupaclaw.getSession.mockResolvedValue({
+      id: 's1',
+      ended_at: null,
+    });
+
+    await client.endSession('s1', { autoSummarize: true });
+
+    expect(mockSupaclaw.endSession).toHaveBeenCalledWith('s1', {
+      autoSummarize: true,
+      summarizeModel: undefined,
+    });
+  });
+
+  it('should pass summarizeModel through', async () => {
+    mockSupaclaw.getSession.mockResolvedValue({
+      id: 's1',
+      ended_at: null,
+    });
+
+    await client.endSession('s1', {
+      autoSummarize: true,
+      summarizeModel: 'gpt-4o',
+    });
+
+    expect(mockSupaclaw.endSession).toHaveBeenCalledWith('s1', {
+      autoSummarize: true,
+      summarizeModel: 'gpt-4o',
+    });
+  });
+
+  it('should be idempotent — no-op if session already ended', async () => {
+    mockSupaclaw.getSession.mockResolvedValue({
+      id: 's1',
+      ended_at: '2026-02-21T00:00:00Z',
+    });
+
+    await client.endSession('s1');
+
+    expect(mockSupaclaw.endSession).not.toHaveBeenCalled();
+  });
+
+  it('should flush buffer before ending session', async () => {
+    const batchClient = new SupaclawHookClient(mockSupaclaw, { batchMode: true });
+    mockSupaclaw.getSession.mockResolvedValue({ id: 's1', ended_at: null });
+
+    // Add a message to the buffer
+    (batchClient as any).buffer.push({
+      sessionId: 's1',
+      role: 'user',
+      content: 'buffered msg',
+      metadata: {},
+    });
+
+    await batchClient.endSession('s1');
+
+    expect(mockSupaclaw.addMessage).toHaveBeenCalled();
+    expect(mockSupaclaw.endSession).toHaveBeenCalled();
+
+    await batchClient.destroy();
+  });
+});

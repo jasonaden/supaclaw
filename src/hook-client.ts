@@ -142,11 +142,25 @@ export class SupaclawHookClient {
   }
 
   async endSession(
-    _sessionId: string,
-    _opts?: Record<string, unknown>
+    sessionId: string,
+    opts: {
+      autoSummarize?: boolean;
+      summarizeModel?: string;
+    } = {}
   ): Promise<void> {
-    // Implemented in Task 8
-    throw new Error('Not implemented');
+    // Flush any buffered messages for this session first
+    if (this.batchMode && this.buffer.length > 0) {
+      await this.flush();
+    }
+
+    // Check if session is already ended (idempotent)
+    const session = await this.supaclaw.getSession(sessionId);
+    if (!session || session.ended_at) return;
+
+    await this.supaclaw.endSession(sessionId, {
+      autoSummarize: opts.autoSummarize,
+      summarizeModel: opts.summarizeModel,
+    });
   }
 
   async getRelevantContext(
@@ -158,7 +172,18 @@ export class SupaclawHookClient {
   }
 
   async flush(): Promise<void> {
-    // Implemented in Task 9
+    if (this.buffer.length === 0) return;
+
+    const messages = [...this.buffer];
+    this.buffer = [];
+
+    for (const msg of messages) {
+      await this.supaclaw.addMessage(msg.sessionId, {
+        role: msg.role as 'user' | 'assistant' | 'system' | 'tool',
+        content: msg.content,
+        metadata: msg.metadata,
+      });
+    }
   }
 
   async destroy(): Promise<void> {
