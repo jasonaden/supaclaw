@@ -168,7 +168,10 @@ describe('Supaclaw.endSession with summarizeModel', () => {
 
 // ============ Phase 2: Hook Client ============
 
-import { shouldLog, type MessageFilter } from '../src/hook-client';
+import { shouldLog, createHookClient, SupaclawHookClient, type MessageFilter, type HookClientConfig } from '../src/hook-client';
+import * as fs from 'fs';
+
+vi.mock('fs');
 
 describe('shouldLog', () => {
   it('should return true when no filter is configured', () => {
@@ -231,5 +234,78 @@ describe('shouldLog', () => {
     expect(shouldLog('[System] reboot', 'user', filter)).toBe(false);
     // Fails role
     expect(shouldLog('Hello world', 'tool', filter)).toBe(false);
+  });
+});
+
+describe('createHookClient', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should create client with explicit config', () => {
+    const client = createHookClient({
+      supabaseUrl: 'http://localhost:54321',
+      supabaseKey: 'test-key',
+      agentId: 'test-agent',
+    });
+
+    expect(client).toBeDefined();
+    expect(typeof client.getOrCreateSession).toBe('function');
+    expect(typeof client.logMessage).toBe('function');
+    expect(typeof client.endSession).toBe('function');
+    expect(typeof client.shouldLog).toBe('function');
+    expect(typeof client.flush).toBe('function');
+    expect(typeof client.destroy).toBe('function');
+  });
+
+  it('should create client from configPath', () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({
+      supabaseUrl: 'http://from-config:54321',
+      supabaseKey: 'config-key',
+      agentId: 'config-agent',
+    }));
+
+    const client = createHookClient({
+      configPath: '/path/to/.supaclaw.json',
+    });
+
+    expect(client).toBeDefined();
+    expect(fs.readFileSync).toHaveBeenCalledWith('/path/to/.supaclaw.json', 'utf-8');
+  });
+
+  it('should merge configPath with explicit options (explicit wins)', () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({
+      supabaseUrl: 'http://from-config:54321',
+      supabaseKey: 'config-key',
+      agentId: 'config-agent',
+    }));
+
+    const client = createHookClient({
+      configPath: '/path/to/.supaclaw.json',
+      agentId: 'explicit-agent',
+    });
+
+    expect(client).toBeDefined();
+  });
+
+  it('should throw if no supabaseUrl provided', () => {
+    expect(() => createHookClient({
+      supabaseKey: 'key',
+      agentId: 'agent',
+    })).toThrow(/supabaseUrl/);
+  });
+
+  it('should throw if no supabaseKey provided', () => {
+    expect(() => createHookClient({
+      supabaseUrl: 'http://localhost',
+      agentId: 'agent',
+    })).toThrow(/supabaseKey/);
+  });
+
+  it('should throw if no agentId provided', () => {
+    expect(() => createHookClient({
+      supabaseUrl: 'http://localhost',
+      supabaseKey: 'key',
+    })).toThrow(/agentId/);
   });
 });
