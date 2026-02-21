@@ -571,3 +571,72 @@ describe('Batch mode', () => {
     await client.destroy();
   });
 });
+
+describe('SupaclawHookClient.getRelevantContext', () => {
+  let client: SupaclawHookClient;
+  let mockSupaclaw: any;
+
+  beforeEach(() => {
+    mockSupaclaw = {
+      hybridRecall: vi.fn().mockResolvedValue([
+        { content: 'User prefers TypeScript', category: 'preference', importance: 0.8 },
+        { content: 'We chose Supabase over Firebase', category: 'decision', importance: 0.9 },
+      ]),
+      recall: vi.fn().mockResolvedValue([
+        { content: 'User prefers TypeScript', category: 'preference', importance: 0.8 },
+      ]),
+      addMessage: vi.fn(),
+      remember: vi.fn(),
+      getSession: vi.fn(),
+      endSession: vi.fn(),
+      getOrCreateSession: vi.fn(),
+    };
+
+    client = new SupaclawHookClient(mockSupaclaw, {});
+  });
+
+  it('should return formatted markdown from hybrid recall', async () => {
+    const result = await client.getRelevantContext('What stack are we using?');
+
+    expect(result).toContain('## Relevant Memories');
+    expect(result).toContain('[preference]');
+    expect(result).toContain('User prefers TypeScript');
+    expect(result).toContain('[decision]');
+    expect(result).toContain('We chose Supabase over Firebase');
+  });
+
+  it('should pass limit to recall', async () => {
+    await client.getRelevantContext('query', { limit: 3 });
+
+    expect(mockSupaclaw.hybridRecall).toHaveBeenCalledWith(
+      'query',
+      expect.objectContaining({ limit: 3 })
+    );
+  });
+
+  it('should use keyword mode when specified', async () => {
+    await client.getRelevantContext('query', { mode: 'keyword' });
+
+    expect(mockSupaclaw.recall).toHaveBeenCalled();
+    expect(mockSupaclaw.hybridRecall).not.toHaveBeenCalled();
+  });
+
+  it('should return empty string when no memories found', async () => {
+    mockSupaclaw.hybridRecall.mockResolvedValue([]);
+
+    const result = await client.getRelevantContext('unknown topic');
+
+    expect(result).toBe('');
+  });
+
+  it('should use general label when category is null', async () => {
+    mockSupaclaw.hybridRecall.mockResolvedValue([
+      { content: 'Some memory', category: null, importance: 0.5 },
+    ]);
+
+    const result = await client.getRelevantContext('query');
+
+    expect(result).toContain('[general]');
+    expect(result).toContain('Some memory');
+  });
+});

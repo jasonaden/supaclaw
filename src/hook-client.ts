@@ -164,11 +164,32 @@ export class SupaclawHookClient {
   }
 
   async getRelevantContext(
-    _query: string,
-    _opts?: Record<string, unknown>
+    query: string,
+    opts: {
+      limit?: number;
+      mode?: 'hybrid' | 'semantic' | 'keyword';
+      maxTokens?: number;
+    } = {}
   ): Promise<string> {
-    // Implemented in Task 10
-    throw new Error('Not implemented');
+    const limit = opts.limit ?? 5;
+    const mode = opts.mode ?? 'hybrid';
+
+    let memories: Array<{ content: string; category?: string | null; importance?: number }>;
+
+    if (mode === 'keyword') {
+      memories = await this.supaclaw.recall(query, { limit });
+    } else {
+      memories = await this.supaclaw.hybridRecall(query, { limit });
+    }
+
+    if (memories.length === 0) return '';
+
+    const lines = memories.map(m => {
+      const cat = m.category || 'general';
+      return `- [${cat}] ${m.content}`;
+    });
+
+    return `## Relevant Memories\n${lines.join('\n')}`;
   }
 
   async flush(): Promise<void> {
